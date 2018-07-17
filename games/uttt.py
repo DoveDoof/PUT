@@ -21,12 +21,16 @@ from pprint import pprint
 from common.base_game_spec import BaseGameSpec
 from techniques.min_max import evaluate
 
-_mb_unfinished = 0
-_mb_draw = 2
-_mb_available = 9
+_mb_unfinished = 8
+_mb_available = 7
+
+# do not change these, so we can sum results for winrate
+_mb_draw = 0
+_mb_X = 1
+_mb_O = -1
 
 def _new_board():
-    return tuple((_mb_available,)*9 if i==9 else (0,)*9 for i in range(10))
+    return tuple((_mb_available,)*9 if i==9 else (_mb_unfinished,)*9 for i in range(10))
     # return ((0,)*9,)*10
 
 def apply_move(board_state, move, side):
@@ -81,16 +85,12 @@ def _get_microboard(board, pos):
     return tuple(get_tuples())
 
 def _has_3_in_a_line(line):
-    return all(x == -1 for x in line) | all(x == 1 for x in line)
+    return all(x == _mb_O for x in line) | all(x == _mb_X for x in line)
 
 def _is_full(microboard):
     return not(any(_mb_available in row or _mb_unfinished in row for row in microboard))
 
 def _winner_microboard(microboard):
-    # 1     X winner
-    # -1    O winner
-    # None  draw
-    # 0     unfinished
     for x in range(3):
         if _has_3_in_a_line(microboard[x]):
             return microboard[x][0]
@@ -117,17 +117,13 @@ def available_moves(board_state):
     board = board_state[:-1]
     macroboard = board_state[-1]
     for x, y in itertools.product(range(9), range(9)):
-        if (board[x][y]==0 and macroboard[x//3*3+y//3] == _mb_available):
+        if (board[x][y]==_mb_unfinished and macroboard[x//3*3+y//3] == _mb_available):
             yield (x,y)
 
 
 def has_winner(board_state):
     macroboard = tuple(board_state[-1][i*3:(i+1)*3] for i in range(3))
-    winner = _winner_microboard(macroboard)
-    if winner == _mb_unfinished:
-        return 0.
-    else:
-        return winner
+    return _winner_microboard(macroboard)
 
 
 def evaluate(board_state):
@@ -146,7 +142,7 @@ def evaluate(board_state):
 def play_game(plus_player_func, minus_player_func, log=0):
     # int: 1 if the plus_player_func won, -1 if the minus_player_func won and 0 for a draw
     board_state = _new_board()
-    player_turn = 1
+    player_turn = _mb_X
 
     last_move = None
     while True:
@@ -156,7 +152,7 @@ def play_game(plus_player_func, minus_player_func, log=0):
             # draw
             if log:
                 print("no moves left, game ended a draw")
-            return 0.
+            return _mb_draw
         if player_turn > 0:
             move = plus_player_func(board_state, player_turn)
         else:
@@ -181,9 +177,10 @@ def play_game(plus_player_func, minus_player_func, log=0):
             input('Press Enter to continue')
 
         winner = has_winner(board_state)
-        if winner != 0:
+        if winner != _mb_unfinished:
+            winner_text = 'X ('+str(_mb_X)+')' if winner == _mb_X else 'O ('+str(_mb_O)+')'
             if log:
-                print("we have a winner, side: %s" % str(winner))
+                print("we have a winner, side: %s" % winner_text)
             return winner
         player_turn = -player_turn
 
@@ -214,8 +211,6 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
 
     def tuple_move_to_flat(self, tuple_move):
         return tuple_move[0] * 9 + tuple_move[1]
-
-
 
 
 

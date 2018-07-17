@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from common.network_helpers import load_network, get_stochastic_network_move, save_network
+from common.visualisation import load_results
 
 
 def train_policy_gradients(game_spec,
@@ -61,9 +62,13 @@ def train_policy_gradients(game_spec,
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
 
+        # load existing network and keep track of number of games played
+        base_episode_number = 0
+        winrates = []
         if network_file_path and os.path.isfile(network_file_path):
             print("loading pre-existing network")
             load_network(session, variables, network_file_path)
+            base_episode_number, winrates = load_results(network_file_path)
 
         mini_batch_board_states, mini_batch_moves, mini_batch_rewards = [], [], []
         results = collections.deque(maxlen=print_results_every)
@@ -74,7 +79,6 @@ def train_policy_gradients(game_spec,
             mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move.argmax())
 
-        winrates = []
         for episode_number in range(1, number_of_games+1):
             # randomize if going first or second
             if (not randomize_first_player) or bool(random.getrandbits(1)):
@@ -114,10 +118,10 @@ def train_policy_gradients(game_spec,
 
             if episode_number % print_results_every == 0:
                 winrate = _win_rate(print_results_every, results)
-                winrates.append([episode_number, winrate])
-                print("episode: %s win_rate: %s" % (episode_number, winrate))
+                winrates.append([base_episode_number+episode_number, winrate])
+                print("episode: %s win_rate: %s" % (base_episode_number+episode_number, winrate))
                 if save_network_file_path:
-                    save_network(session, variables, time.strftime(save_network_file_path[:-2]+"_ep"+str(episode_number)+"_%Y-%m-%d_%H%M%S.p"))
+                    save_network(session, variables, time.strftime(save_network_file_path[:-2]+"_ep"+str(base_episode_number+episode_number)+"_%Y-%m-%d_%H%M%S.p"))
 
         if save_network_file_path:
             save_network(session, variables, save_network_file_path)

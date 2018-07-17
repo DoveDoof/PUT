@@ -22,7 +22,9 @@ def save(parameters, network_folder):
 	if not isdir(network_folder):
 		print('Folder does not exist: ' + network_folder)
 	else:
-		filename = time.strftime("./"+network_folder+"/results_%Y-%m-%d_%H%M%S.json")
+		# how many games were played in total
+		nr_games = str(parameters["results"][-1][0])
+		filename = time.strftime("./"+network_folder+"/_results_%Y-%m-%d_%H%M%S_"+nr_games+".json")
 		with open(filename, 'w') as outfile:
 			json.dump(parameters, outfile)
 
@@ -33,7 +35,13 @@ def load(file):
 
 	return data
 	
-
+def load_results(file):
+	# selects most recent resultfile from folder of given file
+	# returns: total number of games played, history of winrates
+	paths = glob.glob('\\'.join(file.split('/')[:-1] + ['*.json']))
+	paths.sort()
+	data = load(paths[-1])
+	return data["results"][-1][0], data["results"]
 
 def plot_last(directory = './networks/'):
 	# replace /*/ with /**/ to make recursive
@@ -41,9 +49,8 @@ def plot_last(directory = './networks/'):
 	
 	if (len(paths)>0):
 		files = [(i.split('\\')[-1], i) for i in paths]
-		# sort on filename
-		sorted(files, key = lambda x:x[0])
-		
+		# sort on filename, not path
+		files = sorted(files, key = lambda x:x[0])
 		# loads the results from it
 		data = load(files[-1][1])
 		results = data['results']

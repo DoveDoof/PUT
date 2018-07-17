@@ -40,6 +40,14 @@ def train_policy_gradients(game_spec,
         (variables used in the final network : list, win rate: float)
     """
     save_network_file_path = save_network_file_path or network_file_path
+    # create folder if it does not exist
+    if save_network_file_path:
+        split = save_network_file_path.split('/')
+        directory = '/'.join(split[:-1]) or '.'
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+            print("created directory " + directory)
+
     opponent_func = opponent_func or game_spec.get_random_player_func()
     reward_placeholder = tf.placeholder("float", shape=(None,))
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))

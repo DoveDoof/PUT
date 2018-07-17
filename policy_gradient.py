@@ -70,7 +70,7 @@ parameters = {	'batch_size':BATCH_SIZE,
 				'results':res[2]
 				}
 
-plt.save(parameters, save_network_file_path[:-2])
+plt.save(parameters, save_network_file_path)
 
 
-pdb.set_trace()
+# pdb.set_trace()

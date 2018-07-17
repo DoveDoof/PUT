@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import json
 import time
-from os import listdir
+from os.path import isdir
+import glob
 import pprint as pp
 
 def plot(res, title='Winrate over time vs random player'):
@@ -15,10 +16,15 @@ def plot(res, title='Winrate over time vs random player'):
 	plt.show()
 
 def save(parameters, network_folder):
-	# save results from games over time in /temp/
-	filename = time.strftime("./"+network_folder+"/results_%Y-%m-%d_%H%M%S.json")
-	with open(filename, 'w') as outfile:
-		json.dump(parameters, outfile)
+	# check if file was given instead of folder
+	if '.' in network_folder:
+		network_folder = '/'.join(network_folder.split('/')[:-1]) or '.'
+	if not isdir(network_folder):
+		print('Folder does not exist: ' + network_folder)
+	else:
+		filename = time.strftime("./"+network_folder+"/results_%Y-%m-%d_%H%M%S.json")
+		with open(filename, 'w') as outfile:
+			json.dump(parameters, outfile)
 
 def load(file):
 	# loads and returns results using json
@@ -29,22 +35,23 @@ def load(file):
 	
 
 
-def plot_last(dir = './temp/'):
-	# scans the temp folder
-	files = listdir(dir)
-
-	if (len(files)>0):
-		# selects most recent file
-		files.sort()
-
+def plot_last(directory = './networks/'):
+	# replace /*/ with /**/ to make recursive
+	paths = glob.glob('networks/*/*.json', recursive=True)
+	
+	if (len(paths)>0):
+		files = [(i.split('\\')[-1], i) for i in paths]
+		# sort on filename
+		sorted(files, key = lambda x:x[0])
+		
 		# loads the results from it
-		data = load(dir+files[-1])
+		data = load(files[-1][1])
 		results = data['results']
 		del data['results']
 
-		print('Loaded file: ' + files[-1])
+		print('Loaded file: ' + files[-1][1])
 		pp.pprint(data)
 		# plots the results
 		plot(results)
 	else:
-		raise ValueError('No files available in /temp/')
+		raise ValueError('No result files available')

@@ -32,12 +32,13 @@ from techniques.train_policy_gradient import train_policy_gradients
 # NUMBER_OF_GAMES_TO_RUN = 1000
 # HIDDEN_LAYERS = (150, 150, 150)
 
-BATCH_SIZE = 50
-LEARN_RATE = 1e-5
-PRINT_RESULTS_EVERY_X = 100
-NETWORK_FILE_PATH = None
-NUMBER_OF_GAMES_TO_RUN = 500
-HIDDEN_LAYERS = (400, 400, 400)
+BATCH_SIZE = 100 # every how many games to do a parameter update?
+LEARN_RATE = 1e-3
+PRINT_RESULTS_EVERY_X = 500 # every how many games to print the results
+save_network_file_path = 'networks/ep-3_81_81_81/net.p' # path to save a network file
+NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
+NUMBER_OF_GAMES_TO_RUN = 5000
+HIDDEN_LAYERS = (81, 81, 81)
 
 
 # to play a different game change this to another spec, e.g TicTacToeXGameSpec or ConnectXGameSpec, to get these to run
@@ -46,7 +47,6 @@ game_spec = UltimateTicTacToeGameSpec()
 
 input_layer = game_spec.board_squares()
 output_layer = game_spec.outputs()
-save_network_file_path = 'networks/test/test.p'
 
 create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
 

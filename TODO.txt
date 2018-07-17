@@ -1,0 +1,14 @@
+test policy gradient with uttt
+
+
+test shit with:
+	python -m unittest tests\games\test_uttt.py
+
+
+
+tune hyperparameters
+
+to make sure we have the same performance during hyperparameter tuning, Im seeding all random generators:
+	policy_gradient.py:22 (random)
+	train_policy_gradient.py:10 (tensorflow)
+	network_helpers.py:6 (numpy)

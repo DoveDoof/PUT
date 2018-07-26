@@ -36,7 +36,7 @@ BATCH_SIZE = 100 # every how many games to do a parameter update?
 LEARN_RATE = 1e-3
 PRINT_RESULTS_EVERY_X = 500 # every how many games to print the results
 save_network_file_path = 'networks/ep-3_81_81_81/net.p' # path to save a network file
-NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
+NETWORK_FILE_PATH = save_network_file_path # path to load a network file (change to above variable to continue)
 NUMBER_OF_GAMES_TO_RUN = 5000
 HIDDEN_LAYERS = (81, 81, 81)
 

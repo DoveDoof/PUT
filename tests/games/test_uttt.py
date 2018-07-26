@@ -1,4 +1,4 @@
-import unittest
+import unittest as test
 from pprint import pprint
 
 import random
@@ -6,12 +6,12 @@ import time
 import numpy as np
 import games.uttt as ut
 
-class TestUltimateTicTacToe(unittest.TestCase):
+class TestUltimateTicTacToe(test.TestCase):
 	def test_moves(self):
 		b = ut._new_board()
 		pprint(ut.apply_move(b, (8,3), 1))
 
-	@unittest.skip
+	@test.skip
 	def test_game(self):
 		random.seed(1)
 		ut.play_game(ut.random_player, ut.random_player, log = 2)

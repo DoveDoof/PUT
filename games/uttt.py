@@ -188,6 +188,19 @@ def random_player(board_state, _):
     moves = list(available_moves(board_state))
     return random.choice(moves)
 
+def manual_player(board_state, side):
+    moves = list(available_moves(board_state))
+    pprint(board_state[9])
+    print("Player "+str(side)+", choose any of the available moves (0-"+str(len(moves)-1)+"):\n")
+    print(moves)
+    mv = input()
+    try:
+        return moves[int(mv)]
+    # catch non integer and out of range inputs
+    except (ValueError, IndexError):
+        print("Invalid input, playing random move.")
+        return random.choice(moves)
+
 class UltimateTicTacToeGameSpec(BaseGameSpec):
     def __init__(self):
         self.available_moves = available_moves
@@ -199,6 +212,9 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
 
     def get_random_player_func(self):
         return random_player
+
+    def get_manual_player_func(self):
+        return manual_player
 
     def board_dimensions(self):
         return 10, 9

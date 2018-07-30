@@ -15,7 +15,7 @@ class TestUltimateTicTacToe(test.TestCase):
 	# run with: py -m unittest tests\games\test_uttt_network.py
 	def test_game_network(self):
 
-		network_file_path = 'networks/ep-3_81_81_81/net.p'
+		network_file_path = 'networks/ep-3_81_81_81/net_ep6500_2018-07-27_113928.p'
 		
 
 		network_info = load_results(network_file_path, results_only = False)

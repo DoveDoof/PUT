@@ -153,6 +153,12 @@ def play_game(plus_player_func, minus_player_func, log=0):
             if log:
                 print("no moves left, game ended a draw")
             return _mb_draw
+
+        if log==2:
+            import numpy as np
+            print_board_state(board_state, '')
+            input('Press Enter to continue')
+
         if player_turn > 0:
             move = plus_player_func(board_state, player_turn)
         else:
@@ -169,17 +175,11 @@ def play_game(plus_player_func, minus_player_func, log=0):
 
         board_state = apply_move(board_state, move, player_turn)
 
-        if log==2:
-            import numpy as np
-            print('Board:')
-            print(np.matrix(board_state[:-1]))
-            print('Macroboard: ', np.matrix(board_state[-1]))
-            input('Press Enter to continue')
-
         winner = has_winner(board_state)
         if winner != _mb_unfinished:
             winner_text = 'X ('+str(_mb_X)+')' if winner == _mb_X else 'O ('+str(_mb_O)+')'
             if log:
+                print_board_state(board_state, '')
                 print("we have a winner, side: %s" % winner_text)
             return winner
         player_turn = -player_turn
@@ -190,7 +190,6 @@ def random_player(board_state, _):
 
 def manual_player(board_state, side):
     moves = list(available_moves(board_state))
-    pprint(board_state[9])
     print("Player "+str(side)+", choose any of the available moves (0-"+str(len(moves)-1)+"):\n")
     print(moves)
     mv = input()
@@ -200,6 +199,29 @@ def manual_player(board_state, side):
     except (ValueError, IndexError):
         print("Invalid input, playing random move.")
         return random.choice(moves)
+
+def print_board_state(board_state, side, print_mb = True):
+    for i in range(9):
+        pretty_row = [" " if x==_mb_unfinished else x for x in board_state[i]]
+        pretty_row = ['X' if x==_mb_X else x for x in pretty_row]
+        pretty_row = ['O' if x==_mb_O else x for x in pretty_row]
+        pretty_row.insert(3, "|")
+        pretty_row.insert(7, "|")
+        print(" ".join(pretty_row))
+        if i==2 or i==5:
+            print('------|-------|------')
+    if print_mb:
+        print("Macroboard:")
+        pretty_mb = [" " if x==_mb_unfinished else x for x in board_state[-1]]
+        pretty_mb = ["X" if x==_mb_X else x for x in pretty_mb]
+        pretty_mb = ["O" if x==_mb_O else x for x in pretty_mb]
+        pretty_mb = ["." if x==_mb_available else x for x in pretty_mb]
+        pretty_mb = ["D" if x==_mb_draw else x for x in pretty_mb]
+        print("|".join(pretty_mb[:3]), )
+        print("------")
+        print("|".join(pretty_mb[3:6]))
+        print("------")
+        print("|".join(pretty_mb[6:]))
 
 class UltimateTicTacToeGameSpec(BaseGameSpec):
     def __init__(self):

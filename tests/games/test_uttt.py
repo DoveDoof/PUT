@@ -7,15 +7,17 @@ import numpy as np
 import games.uttt as ut
 
 class TestUltimateTicTacToe(test.TestCase):
+	@test.skip
 	def test_moves(self):
 		b = ut._new_board()
 		pprint(ut.apply_move(b, (8,3), 1))
 
-	@test.skip
+	# @test.skip
 	def test_game(self):
-		random.seed(1)
+		# random.seed(1)
 		ut.play_game(ut.random_player, ut.random_player, log = 2)
-
+	
+	@test.skip
 	def test_games(self):
 		n = 1000
 
@@ -28,6 +30,7 @@ class TestUltimateTicTacToe(test.TestCase):
 		print('Draws        : ', results.count(0)/n)
 		print('Winrate      : ', 0.5 + 1.*sum(results)/n)
 
+	@test.skip
 	def test_macroboard(self):
 		b = (( 0, -1,  1,  1,  0,  1,  0, -1, -1),
 			 ( 0, -1,  1, -1,  1, -1,  1,  1, -1),

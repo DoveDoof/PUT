@@ -35,13 +35,16 @@ def load(file):
 
 	return data
 	
-def load_results(file):
+def load_results(file, results_only = True):
 	# selects most recent resultfile from folder of given file
 	# returns: total number of games played, history of winrates
 	paths = glob.glob('\\'.join(file.split('/')[:-1] + ['*.json']))
 	paths.sort()
 	data = load(paths[-1])
-	return data["results"][-1][0], data["results"]
+	if results_only:
+		return data["results"][-1][0], data["results"]
+	else:
+		return data
 
 def plot_last(directory = './networks/'):
 	# replace /*/ with /**/ to make recursive

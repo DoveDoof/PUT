@@ -19,7 +19,7 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
 
     Returns:
         (input_layer, output_layer, [variables]) : The final item in the tuple is a list containing all the parameters,
-            wieghts and biases used in this network
+            weights and biases used in this network
     """
     output_nodes = output_nodes or input_nodes
 
@@ -117,28 +117,38 @@ def invert_board_state(board_state):
 
 def get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                 valid_only=False, game_spec=None):
-    """Choose a move for the given board_state using a stocastic policy. A move is selected using the values from the
+    """Choose a move for the given board_state using a stochastic policy. A move is selected using the values from the
      output_layer as a categorical probability distribution to select a single move
 
     Args:
         session (tf.Session): Session used to run this network
         input_layer (tf.Placeholder): Placeholder to the network used to feed in the board_state
         output_layer (tf.Tensor): Tensor that will output the probabilities of the moves, we expect this to be of
-            dimesensions (None, board_squares) and the sum of values across the board_squares to be 1.
+            dimensions (None, board_squares) and the sum of values across the board_squares to be 1.
         board_state: The board_state we want to get the move for.
         side: The side that is making the move.
 
     Returns:
-        (np.array) It's shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
+        (np.array) Its shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
     """
     np_board_state = np.array(board_state)
     if side == -1:
         np_board_state = -np_board_state
 
+    # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
+    # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
+    correct_flat_board = np.array([])
+    for h in [0,3,6]:
+        for i in [0,3,6]:
+            for j in range (0,3):
+                correct_flat_board = np.append(correct_flat_board,np_board_state[h + j,i:i+3])
+    # Add the last row from the board which contains the macroboard:
+    correct_flat_board = np.append(correct_flat_board, np_board_state[-1,:])
+
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
+
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
-
     if valid_only:
         available_moves = list(game_spec.available_moves(board_state))
         if len(available_moves) == 1:

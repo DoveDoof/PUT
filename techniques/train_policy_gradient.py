@@ -6,6 +6,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
+from techniques.monte_carlo import monte_carlo_tree_search_uct
 from common.network_helpers import load_network, get_stochastic_network_move, save_network
 from common.visualisation import load_results
 
@@ -56,7 +57,8 @@ def train_policy_gradients(game_spec,
     input_layer, output_layer, variables = create_network()
 
     policy_gradient = tf.log(
-        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), reduction_indices=1)) * reward_placeholder
+        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder
+
     train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
 
     with tf.Session() as session:
@@ -74,21 +76,33 @@ def train_policy_gradients(game_spec,
         results = collections.deque(maxlen=print_results_every)
 
         def make_training_move(board_state, side):
-            mini_batch_board_states.append(np.ravel(board_state) * side)
+            # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
+            # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
+            np_board_state = np.array(board_state)
+            correct_flat_board = np.array([])
+            for h in [0, 3, 6]:
+                for i in [0, 3, 6]:
+                    for j in range(0, 3):
+                        correct_flat_board = np.append(correct_flat_board, np_board_state[h + j, i:i + 3])
+            # Add the last row from the board which contains the macroboard:
+            correct_flat_board = np.append(correct_flat_board, np_board_state[-1, :])
+
+            mini_batch_board_states.append(correct_flat_board * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
             move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
+            #a, move = monte_carlo_tree_search_uct(game_spec, board_state, side, 100)
             mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move.argmax())
 
         for episode_number in range(1, number_of_games+1):
             # randomize if going first or second
             if (not randomize_first_player) or bool(random.getrandbits(1)):
-                reward = game_spec.play_game(make_training_move, opponent_func)
+                reward = game_spec.play_game(make_training_move, opponent_func)     # In this line one game is played.
             else:
                 reward = -game_spec.play_game(opponent_func, make_training_move)
 
             results.append(reward)
 
-            # we scale here so winning quickly is better winning slowly and loosing slowly better than loosing quick
+            # we scale here so winning quickly is better winning slowly and losing slowly better than losing quickly
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)
 
             reward /= float(last_game_length)
@@ -118,11 +132,41 @@ def train_policy_gradients(game_spec,
 
             if episode_number % print_results_every == 0:
                 winrate = _win_rate(print_results_every, results)
+                if winrate == 0:
+                    print('DEBUG TEST')
                 winrates.append([base_episode_number+episode_number, winrate])
                 print("episode: %s win_rate: %s" % (base_episode_number+episode_number, winrate))
                 if save_network_file_path:
                     save_network(session, variables, time.strftime(save_network_file_path[:-2]+"_ep"+str(base_episode_number+episode_number)+"_%Y-%m-%d_%H%M%S.p"))
 
+                """
+                tf.trainable_variables() #contains the name and shape of the weights of the layers.
+                print(tf.trainable_variables())
+                w1 = [v for v in tf.trainable_variables() if v.name == "network/output_weights:0"][0]
+                b1 = [v for v in tf.trainable_variables() if v.name == "network/output_bias:0"][0]
+                init_weights = tf.global_variables_initializer()
+                with tf.Session() as sesstest:
+                    sesstest.run(init_weights)
+                    v1 = sesstest.run(w1)
+                    print('\n Output layer weights: \n')
+                    print(v1)
+                    v2 = sesstest.run(b1)
+                    print('\n Biases: \n')
+                    print(v2)
+                
+                # tf.trainable_variables() contains the name and shape of the weights of the layers.
+                print(tf.trainable_variables())
+                w_all = [v for v in tf.trainable_variables()] # This will give all weights and biases.
+                # To look only at one layer of weights, check trainable_variables for the name and use f.e.
+                # w1 = [v for v in tf.trainable_variables() if v.name == "network/weights_1:0"][0]
+                init_weights = tf.global_variables_initializer()
+                # To actually print the the weights on screen, a Session must be used:
+                with tf.Session() as sesstest:
+                    sesstest.run(init_weights)
+                    v = sesstest.run(w_all)
+                    print('\n Weights \n')
+                    print(v)
+            """
         if save_network_file_path:
             save_network(session, variables, save_network_file_path)
 

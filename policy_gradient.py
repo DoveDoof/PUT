@@ -20,6 +20,7 @@ import pdb
 import common.visualisation as plt
 import random
 random.seed(1)
+import common.custom_cnn as cnn
 
 from common.network_helpers import create_network
 from games.uttt import UltimateTicTacToeGameSpec
@@ -32,14 +33,17 @@ from techniques.train_policy_gradient import train_policy_gradients
 # NUMBER_OF_GAMES_TO_RUN = 1000
 # HIDDEN_LAYERS = (150, 150, 150)
 
-BATCH_SIZE = 100 # every how many games to do a parameter update?
+BATCH_SIZE = 1000 # every how many games to do a parameter update?
 LEARN_RATE = 1e-3
-PRINT_RESULTS_EVERY_X = 500 # every how many games to print the results
-save_network_file_path = 'networks/ep-3_81_81_81/net.p' # path to save a network file
+PRINT_RESULTS_EVERY_X = 1000 # every how many games to print the results
+save_network_file_path = 'networks/cnn_10L/net.p' # path to save a network file
 NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
-NUMBER_OF_GAMES_TO_RUN = 5000
-HIDDEN_LAYERS = (81, 81, 81)
-
+NUMBER_OF_GAMES_TO_RUN = 15000
+HIDDEN_LAYERS = (81, 81, 81) 	# Not used in the CNN architecture
+number_of_CNNlayers = 20
+filter_shape = [3, 3]			# Length and width of filter
+filter_depth = 20
+dense_width = [200]		# Number of nodes in layers after the CNN
 
 # to play a different game change this to another spec, e.g TicTacToeXGameSpec or ConnectXGameSpec, to get these to run
 # well may require tuning the hyper parameters a bit
@@ -48,7 +52,7 @@ game_spec = UltimateTicTacToeGameSpec()
 input_layer = game_spec.board_squares()
 output_layer = game_spec.outputs()
 
-create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
+create_network_func = functools.partial(cnn.create_network, number_of_CNNlayers, filter_shape, filter_depth, dense_width)
 
 res = train_policy_gradients(game_spec, create_network_func, NETWORK_FILE_PATH,
 							 number_of_games=NUMBER_OF_GAMES_TO_RUN,

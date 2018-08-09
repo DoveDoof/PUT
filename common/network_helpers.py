@@ -46,6 +46,15 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
 
             current_layer = tf.nn.relu(
                 tf.matmul(current_layer, hidden_weights) + hidden_bias)
+            """
+            # Apply batch normalization
+            batch_mean, batch_var = tf.nn.moments(current_layer, [0])
+            scale = tf.Variable(tf.ones(current_layer.get_shape()[2:]))
+            beta = tf.Variable(tf.zeros(current_layer.get_shape()[2:]))
+            current_layer = tf.nn.batch_normalization(current_layer, batch_mean, batch_var, beta, scale, 1e-5)
+            variables.append(scale)
+            variables.append(beta)
+            """
 
         if isinstance(output_nodes, tuple):
             output_nodes = reduce(operator.mul, input_nodes, 1)
@@ -134,16 +143,8 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
     np_board_state = np.array(board_state)
     if side == -1:
         np_board_state = -np_board_state
-
-    # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
-    # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
-    correct_flat_board = np.array([])
-    for h in [0,3,6]:
-        for i in [0,3,6]:
-            for j in range (0,3):
-                correct_flat_board = np.append(correct_flat_board,np_board_state[h + j,i:i+3])
-    # Add the last row from the board which contains the macroboard:
-    correct_flat_board = np.append(correct_flat_board, np_board_state[-1,:])
+    """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
+    np_board_state = create_3x3_board_states(board_state)
 
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
 
@@ -209,3 +210,16 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     one_hot = np.zeros(len(probability_of_actions))
     one_hot[move] = 1.
     return one_hot
+
+def create_3x3_board_states(board_state):
+    # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
+    # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
+    np_board_state = np.array(board_state)
+    correct_flat_board = np.array([])
+    for h in [0, 3, 6]:
+        for i in [0, 3, 6]:
+            for j in range(0, 3):
+                correct_flat_board = np.append(correct_flat_board, np_board_state[h + j, i:i + 3])
+                # Add the last row from the board which contains the macroboard:
+    correct_flat_board = np.append(correct_flat_board, np_board_state[-1,:]) #Without this line: 9x9 board
+    return correct_flat_board

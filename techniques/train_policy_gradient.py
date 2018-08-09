@@ -6,7 +6,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from techniques.monte_carlo import monte_carlo_tree_search_uct
+from common.network_helpers import create_3x3_board_states
 from common.network_helpers import load_network, get_stochastic_network_move, save_network
 from common.visualisation import load_results
 
@@ -78,18 +78,12 @@ def train_policy_gradients(game_spec,
         def make_training_move(board_state, side):
             # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
             # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
-            np_board_state = np.array(board_state)
-            correct_flat_board = np.array([])
-            for h in [0, 3, 6]:
-                for i in [0, 3, 6]:
-                    for j in range(0, 3):
-                        correct_flat_board = np.append(correct_flat_board, np_board_state[h + j, i:i + 3])
-            # Add the last row from the board which contains the macroboard:
-            correct_flat_board = np.append(correct_flat_board, np_board_state[-1, :])
+            #np_board_state = np.array(board_state)
+            """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
+            np_board_state = create_3x3_board_states(board_state)
 
-            mini_batch_board_states.append(correct_flat_board * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
+            mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
             move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
-            #a, move = monte_carlo_tree_search_uct(game_spec, board_state, side, 100)
             mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move.argmax())
 

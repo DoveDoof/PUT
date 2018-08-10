@@ -33,15 +33,15 @@ from techniques.train_policy_gradient import train_policy_gradients
 # NUMBER_OF_GAMES_TO_RUN = 1000
 # HIDDEN_LAYERS = (150, 150, 150)
 
-BATCH_SIZE = 1000 # every how many games to do a parameter update?
-LEARN_RATE = 1e-2
-PRINT_RESULTS_EVERY_X = 1000 # every how many games to print the results
-save_network_file_path = 'networks/90_90_90_batch_norm/net.p' # path to save a network file
+BATCH_SIZE = 100 # every how many games to do a parameter update?
+LEARN_RATE = 1e-3
+PRINT_RESULTS_EVERY_X = 100 # every how many games to print the results
+save_network_file_path = 'networks/D_cnn_3_3_3_10_batch_100/net.p' # path to save a network file
 NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
-NUMBER_OF_GAMES_TO_RUN = 15000
+NUMBER_OF_GAMES_TO_RUN = 20000
 HIDDEN_LAYERS = (90, 90, 90) 	# Not used in the CNN architecture
-number_of_CNNlayers = 5
-filter_shape = [2, 2]			# Length and width of filter
+number_of_CNNlayers = 3
+filter_shape = [3, 3]			# Length and width of filter
 filter_depth = 10
 dense_width = []		# Number of nodes in layers after the CNN
 
@@ -52,8 +52,8 @@ game_spec = UltimateTicTacToeGameSpec()
 input_layer = game_spec.board_squares()
 output_layer = game_spec.outputs()
 
-#create_network_func = functools.partial(cnn.create_network, number_of_CNNlayers, filter_shape, filter_depth, dense_width)
-create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
+create_network_func = functools.partial(cnn.create_network, number_of_CNNlayers, filter_shape, filter_depth, dense_width)
+#create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
 
 res = train_policy_gradients(game_spec, create_network_func, NETWORK_FILE_PATH,
 							 number_of_games=NUMBER_OF_GAMES_TO_RUN,

@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from common.network_helpers import create_3x3_board_states
-from common.network_helpers import load_network, get_stochastic_network_move, save_network
+from common.network_helpers import load_network, get_stochastic_network_move, save_network, get_deterministic_network_move
 from common.visualisation import load_results
 
 
@@ -83,7 +83,8 @@ def train_policy_gradients(game_spec,
             np_board_state = create_3x3_board_states(board_state)
 
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
-            move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
+            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
+            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
             mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move.argmax())
 

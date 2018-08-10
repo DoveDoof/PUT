@@ -202,7 +202,7 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     if valid_only:
         available_moves = game_spec.available_moves(board_state)
         available_moves_flat = [game_spec.tuple_move_to_flat(x) for x in available_moves]
-        for i in range(game_spec.board_squares()):
+        for i in range(game_spec.board_squares()-9): # -9 because otherwise the macroboard is included
             if i not in available_moves_flat:
                 probability_of_actions[i] = 0
 

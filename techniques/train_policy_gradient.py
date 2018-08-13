@@ -20,7 +20,8 @@ def train_policy_gradients(game_spec,
                            print_results_every=1000,
                            learn_rate=1e-4,
                            batch_size=100,
-                           randomize_first_player=True):
+                           randomize_first_player=True,
+                           CNN_ON = 0):
     """Train a network using policy gradients
 
     Args:
@@ -37,6 +38,7 @@ def train_policy_gradients(game_spec,
         print_results_every (int): Prints results to std out every x games, also saves the network
         learn_rate (float):
         batch_size (int):
+        CNN_ON: if 1, then the convolutional neural network is used
 
     Returns:
         (variables used in the final network : list, win rate: float)
@@ -76,11 +78,13 @@ def train_policy_gradients(game_spec,
         results = collections.deque(maxlen=print_results_every)
 
         def make_training_move(board_state, side):
-            # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
-            # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
-            #np_board_state = np.array(board_state)
-            """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
-            np_board_state = create_3x3_board_states(board_state)
+            if CNN_ON:
+                # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
+                # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
+                """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
+                np_board_state = create_3x3_board_states(board_state)
+            else:
+                np_board_state = np.array(board_state)
 
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
             #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)

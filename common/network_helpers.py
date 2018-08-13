@@ -143,8 +143,6 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
     np_board_state = np.array(board_state)
     if side == -1:
         np_board_state = -np_board_state
-    """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
-    np_board_state = create_3x3_board_states(board_state)
 
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
 

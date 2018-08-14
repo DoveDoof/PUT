@@ -87,10 +87,17 @@ def train_policy_gradients(game_spec,
                 np_board_state = np.array(board_state)
 
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
-            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
-            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
-            mini_batch_moves.append(move)
-            return game_spec.flat_move_to_tuple(move.argmax())
+            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, CNN_ON = CNN_ON)
+            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, CNN_ON = CNN_ON)
+            move_for_game = move # The move returned to the game is in a different configuration than the CNN learn move
+            if CNN_ON:
+                # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
+                # the same should happen for the mini batch moves
+                move = create_3x3_board_states(np.reshape(move,[9,9]))   # The function requires a 9x9 array
+                mini_batch_moves.append(move[0:81])
+            else:
+                mini_batch_moves.append(move)
+            return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
         for episode_number in range(1, number_of_games+1):
             # randomize if going first or second

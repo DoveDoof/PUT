@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from common.network_helpers import get_stochastic_network_move, load_network, save_network
-
+from common.network_helpers import create_3x3_board_states
 
 def train_policy_gradients_vs_historic(game_spec, create_network, network_file_path,
                                        save_network_file_path=None,
@@ -17,11 +17,12 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
                                        number_of_games=100000,
                                        print_results_every=1000,
                                        learn_rate=1e-4,
-                                       batch_size=100):
+                                       batch_size=100,
+                                       CNN_ON=0):
     """Train a network against itself and over time store new version of itself to play against.
 
     Args:
-        historic_network_base_path (str): Bast path to save new historic networks to a number for the network "slot" is
+        historic_network_base_path (str): Base path to save new historic networks to a number for the network "slot" is
             appended to the end of this string.
         save_historic_every (int): We save a version of the learning network into one of the historic network
             "slots" every x number of games. We have number_of_historic_networks "slots"
@@ -43,9 +44,9 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
     input_layer, output_layer, variables = create_network()
 
     reward_placeholder = tf.placeholder("float", shape=(None,))
-    actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.board_squares()))
+    actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
     policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer)
-    train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient)
+    train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
 
     current_historical_index = 0
     historical_networks = []
@@ -60,30 +61,43 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
 
-        def make_move_historical(histoical_network_index, board_state, side):
-            net = historical_networks[histoical_network_index]
+        def make_move_historical(historical_network_index, board_state, side):
+            net = historical_networks[historical_network_index]
             move = get_stochastic_network_move(session, net[0], net[1], board_state, side,
-                                               valid_only=True, game_spec=game_spec)
+                                               valid_only=True, game_spec=game_spec, CNN_ON=CNN_ON)
             return game_spec.flat_move_to_tuple(move.argmax())
 
         def make_training_move(board_state, side):
-            mini_batch_board_states.append(np.ravel(board_state) * side)
+            if CNN_ON:
+                np_board_state = create_3x3_board_states(board_state)
+            else:
+                np_board_state = np.array(board_state)
+
+            mini_batch_board_states.append(np.ravel(np_board_state) * side)
             move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-                                               valid_only=True, game_spec=game_spec)
-            mini_batch_moves.append(move)
-            return game_spec.flat_move_to_tuple(move.argmax())
+                                               valid_only=True, game_spec=game_spec, CNN_ON=CNN_ON)
+            move_for_game = move  # The move returned to the game is in a different configuration than the CNN learn move
+            if CNN_ON:
+                # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
+                # the same should happen for the mini batch moves
+                move = create_3x3_board_states(np.reshape(move,[9,9]))   # The function requires a 9x9 array
+                mini_batch_moves.append(move[0:81])
+            else:
+                mini_batch_moves.append(move)
+            return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
         if os.path.isfile(network_file_path):
             print("loading pre existing weights")
             load_network(session, variables, network_file_path)
         else:
-            print("could not find previous weights so initialising randomly")
+            print("Could not find previous weights so initialising randomly")
 
         for i in range(number_of_historic_networks):
             if os.path.isfile(historic_network_base_path + str(i) + '.p'):
                 load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
             elif os.path.isfile(network_file_path):
                 # if we can't load a historical file use the current network weights
+                print('Warning: loading historical file failed. Current net is being used.')
                 load_network(session, historical_networks[i][2], network_file_path)
 
         for episode_number in range(1, number_of_games):
@@ -129,6 +143,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
 
             if episode_number % print_results_every == 0:
                 print("episode: %s average result: %s" % (episode_number, np.mean(results)))
+                #if np.mean(results)
 
             if episode_number % save_historic_every == 0:
                 print("saving historical network %s", current_historical_index)

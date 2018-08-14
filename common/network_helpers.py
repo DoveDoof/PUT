@@ -125,7 +125,7 @@ def invert_board_state(board_state):
 
 
 def get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-                                valid_only=False, game_spec=None):
+                                valid_only=False, game_spec=None, CNN_ON=0):
     """Choose a move for the given board_state using a stochastic policy. A move is selected using the values from the
      output_layer as a categorical probability distribution to select a single move
 
@@ -140,7 +140,10 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
     Returns:
         (np.array) Its shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
     """
-    np_board_state = np.array(board_state)
+    if CNN_ON:
+        np_board_state = create_3x3_board_states(board_state)
+    else:
+        np_board_state = np.array(board_state)
     if side == -1:
         np_board_state = -np_board_state
 
@@ -148,6 +151,9 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
+    if CNN_ON:
+        probability_of_actions = rearrange_3x3_board_to_normal(probability_of_actions)
+
     if valid_only:
         available_moves = list(game_spec.available_moves(board_state))
         if len(available_moves) == 1:
@@ -174,7 +180,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
 
 
 def get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only=False,
-                                   game_spec=None):
+                                   game_spec=None, CNN_ON = 0):
     """Choose a move for the given board_state using a deterministic policy. A move is selected using the values from
     the output_layer and selecting the move with the highest score.
 
@@ -189,13 +195,20 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     Returns:
         (np.array) It's shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
     """
-    np_board_state = np.array(board_state)
+    if CNN_ON:
+        np_board_state = create_3x3_board_states(board_state)
+    else:
+        np_board_state = np.array(board_state)
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
     if side == -1:
         np_board_state = -np_board_state
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
+    if CNN_ON:
+        # If this is the case, the actions are ordered as: first row all actions of first field, etc.
+        # We need to rearrange such that it corresponds to the board_state from the game itself
+        probability_of_actions = rearrange_3x3_board_to_normal(probability_of_actions)
 
     if valid_only:
         available_moves = game_spec.available_moves(board_state)
@@ -207,17 +220,30 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     move = np.argmax(probability_of_actions)
     one_hot = np.zeros(len(probability_of_actions))
     one_hot[move] = 1.
-    return one_hot
+    return one_hot # Returns a move according to original board state logic
 
 def create_3x3_board_states(board_state):
     # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
     # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
     np_board_state = np.array(board_state)
     correct_flat_board = np.array([])
+    correct_tuple_board = ()
     for h in [0, 3, 6]:
         for i in [0, 3, 6]:
             for j in range(0, 3):
                 correct_flat_board = np.append(correct_flat_board, np_board_state[h + j, i:i + 3])
                 # Add the last row from the board which contains the macroboard:
     correct_flat_board = np.append(correct_flat_board, np_board_state[-1,:]) #Without this line: 9x9 board
+    for i in range(0,10):
+        correct_tuple_board = correct_tuple_board + (tuple(correct_flat_board[i*9:(i*9+9)]),)
     return correct_flat_board
+
+def rearrange_3x3_board_to_normal(flat_3x3_board):
+    # This function changes the list of 81 values from: first row is first miniboard, second row is second miniboard
+    # etc. back to first row is equal to uttt board first row etc.
+    normal_board = np.array([])
+    for i in [0, 27, 54]:
+        for j in [0, 3, 6]:
+            for k in [0, 9, 18]:
+                normal_board = np.append(normal_board, flat_3x3_board[i+j+k:i+j+k+3])
+    return normal_board

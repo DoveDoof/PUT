@@ -3,19 +3,11 @@ Applying the deep learning techniques from to play ultimate tic-tac-toe
 
 Original repo by Daniel Slater: https://github.com/DanielSlater/AlphaToe
 
-# AlphaToe
-Applying the deep learning techniques from Alpha Go to play tic-tac-toe
-
-These are the code examples to with my talk, the slide for which are in AlphaToe.pdf
-
-As well as the slides, the file script/policy_gradient.py is a good starting point for the project. All networks are 
-built using TensorFlow.
-
-## SetUp
-
-To get running start by creating a virtual env/conda env with tensorFlow installed. Current instructions for this are 
-at: https://www.tensorflow.org/versions/r0.11/get_started/os_setup.html#anaconda-installation
-
-I've also found this useful: https://anaconda.org/jjhelmus/tensorflow
-
 Then run the file file policy_gradient.py
+
+## testing
+Test scripts in the tests folder by running "python -m unittest tests\games\test_uttt.py"
+to make sure we have the same performance during hyperparameter tuning, all random generators are seeded:
+policy_gradient.py:22 (random)
+train_policy_gradient.py:10 (tensorflow)
+network_helpers.py:6 (numpy)

@@ -94,3 +94,6 @@ networks/
 
 # folder created by pycharm
 .idea/
+
+# config file for network
+_config.yml

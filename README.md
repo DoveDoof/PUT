@@ -1,3 +1,6 @@
+# UTTT
+Applying the deep learning techniques from to play ultimate tic-tac-toe
+
 Original repo by Daniel Slater: https://github.com/DanielSlater/AlphaToe
 
 # AlphaToe
@@ -16,5 +19,3 @@ at: https://www.tensorflow.org/versions/r0.11/get_started/os_setup.html#anaconda
 I've also found this useful: https://anaconda.org/jjhelmus/tensorflow
 
 Then run the file file policy_gradient.py
-
-This has been tested with python 2.7 and 3.5

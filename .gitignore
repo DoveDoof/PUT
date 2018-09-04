@@ -91,3 +91,5 @@ ENV/
 # created networks
 networks/
 *.p
+
+.idea/

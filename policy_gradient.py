@@ -20,7 +20,9 @@ import pdb
 import common.visualisation as plt
 import random
 random.seed(1)
+import common.custom_cnn as cnn
 
+from techniques.train_policy_gradient_historic import train_policy_gradients_vs_historic
 from common.network_helpers import create_network
 from games.uttt import UltimateTicTacToeGameSpec
 from techniques.train_policy_gradient import train_policy_gradients
@@ -32,14 +34,22 @@ from techniques.train_policy_gradient import train_policy_gradients
 # NUMBER_OF_GAMES_TO_RUN = 1000
 # HIDDEN_LAYERS = (150, 150, 150)
 
-BATCH_SIZE = 100 # every how many games to do a parameter update?
+historic = 1
+CNN_ON = 1
+BATCH_SIZE = 1000 # every how many games to do a parameter update?
 LEARN_RATE = 1e-3
-PRINT_RESULTS_EVERY_X = 500 # every how many games to print the results
-save_network_file_path = 'networks/ep-3_81_81_81/net.p' # path to save a network file
-NETWORK_FILE_PATH = save_network_file_path # path to load a network file (change to above variable to continue)
-NUMBER_OF_GAMES_TO_RUN = 5000
-HIDDEN_LAYERS = (81, 81, 81)
+PRINT_RESULTS_EVERY_X = 1000 # every how many games to print the results
+save_network_file_path = 'networks/Historic_test/net.p' # path to save a network file
+NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
+NUMBER_OF_GAMES_TO_RUN = 20000
+HIDDEN_LAYERS = (90, 90, 90) 	# Not used in the CNN architecture
+number_of_CNNlayers = 3
+filter_shape = [3, 3]			# Length and width of filter
+filter_depth = 100
+dense_width = []		# Number of nodes in layers after the CNN
 
+number_of_historic_networks = 1
+save_historic_every = 10000
 
 # to play a different game change this to another spec, e.g TicTacToeXGameSpec or ConnectXGameSpec, to get these to run
 # well may require tuning the hyper parameters a bit
@@ -48,18 +58,49 @@ game_spec = UltimateTicTacToeGameSpec()
 input_layer = game_spec.board_squares()
 output_layer = game_spec.outputs()
 
-create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
+if CNN_ON:
+	create_network_func = functools.partial(cnn.create_network, number_of_CNNlayers, filter_shape, filter_depth, dense_width)
+else:
+	create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
 
-res = train_policy_gradients(game_spec, create_network_func, NETWORK_FILE_PATH,
+if historic:
+	res = train_policy_gradients_vs_historic(game_spec, create_network_func, save_network_file_path,
+                                       save_network_file_path=save_network_file_path,
+                                       number_of_historic_networks=number_of_historic_networks,
+                                       save_historic_every=save_historic_every,
+                                       historic_network_base_path='historic_network',
+                                       number_of_games=NUMBER_OF_GAMES_TO_RUN,
+                                       print_results_every=PRINT_RESULTS_EVERY_X,
+                                       learn_rate=LEARN_RATE,
+                                       batch_size=BATCH_SIZE,
+                                       CNN_ON=CNN_ON)
+else:
+	res = train_policy_gradients(game_spec, create_network_func, NETWORK_FILE_PATH,
 							 number_of_games=NUMBER_OF_GAMES_TO_RUN,
 							 batch_size=BATCH_SIZE,
 							 learn_rate=LEARN_RATE,
 							 print_results_every=PRINT_RESULTS_EVERY_X,
-							 save_network_file_path = save_network_file_path)
+							 save_network_file_path = save_network_file_path,
+							 CNN_ON = CNN_ON)
 
+if CNN_ON:
+	parameters = {'batch_size': BATCH_SIZE,
+				  'learn_rate': LEARN_RATE,
+				  'print_results_every': PRINT_RESULTS_EVERY_X,
+				  'network_file_path': NETWORK_FILE_PATH,
+				  'number_of_games': NUMBER_OF_GAMES_TO_RUN,
+				  'input_layer': input_layer,
+				  'number_of_CNNlayers': number_of_CNNlayers,
+				  'filter_shape': filter_shape,
+				  'filter_depth': filter_depth,
+				  'dense_width': dense_width,
+				  'save_network_file_path': save_network_file_path,
+				  'results': res[2]
+				  }
 
-parameters = {	'batch_size':BATCH_SIZE, 
-				'learn_rate':LEARN_RATE, 
+else:
+	parameters = {	'batch_size':BATCH_SIZE,
+				'learn_rate':LEARN_RATE,
 				'print_results_every':PRINT_RESULTS_EVERY_X,
 				'network_file_path':NETWORK_FILE_PATH,
 				'number_of_games':NUMBER_OF_GAMES_TO_RUN,

@@ -27,91 +27,45 @@ from common.network_helpers import create_network
 from games.uttt import UltimateTicTacToeGameSpec
 from techniques.train_policy_gradient import train_policy_gradients
 
-# BATCH_SIZE = 100  # every how many games to do a parameter update?
-# LEARN_RATE = 1e-3
-# PRINT_RESULTS_EVERY_X = 100  # every how many games to print the results
-# NETWORK_FILE_PATH = None#'current_network.p'  # path to save the network to
-# NUMBER_OF_GAMES_TO_RUN = 1000
-# HIDDEN_LAYERS = (150, 150, 150)
 
-historic = 1
-CNN_ON = 1
-BATCH_SIZE = 1000 # every how many games to do a parameter update?
-LEARN_RATE = 1e-3
-PRINT_RESULTS_EVERY_X = 1000 # every how many games to print the results
-save_network_file_path = 'networks/Historic_test/net.p' # path to save a network file
-NETWORK_FILE_PATH = None # path to load a network file (change to above variable to continue)
-NUMBER_OF_GAMES_TO_RUN = 20000
-HIDDEN_LAYERS = (90, 90, 90) 	# Not used in the CNN architecture
-number_of_CNNlayers = 3
-filter_shape = [3, 3]			# Length and width of filter
-filter_depth = 100
-dense_width = []		# Number of nodes in layers after the CNN
+# Import config file
+import yaml
+with open("_config.yml", 'r') as f:
+	config = yaml.load(f)
 
-number_of_historic_networks = 1
-save_historic_every = 10000
-
-# to play a different game change this to another spec, e.g TicTacToeXGameSpec or ConnectXGameSpec, to get these to run
-# well may require tuning the hyper parameters a bit
 game_spec = UltimateTicTacToeGameSpec()
 
 input_layer = game_spec.board_squares()
 output_layer = game_spec.outputs()
 
-if CNN_ON:
-	create_network_func = functools.partial(cnn.create_network, number_of_CNNlayers, filter_shape, filter_depth, dense_width)
+config['input_layer'] = input_layer
+config['output_layer'] = output_layer
+
+if config['cnn_on']:
+	create_network_func = functools.partial(cnn.create_network, 
+											config['number_of_cnnlayers'],
+											config['filter_shape'],
+											config['filter_depth'],
+											config['dense_width'])
 else:
-	create_network_func = functools.partial(create_network, input_layer, HIDDEN_LAYERS, output_layer)
+	create_network_func = functools.partial(create_network,
+											config['input_layer'],
+											config['hidden_layers'],
+											config['output_layer'])
 
-if historic:
-	res = train_policy_gradients_vs_historic(game_spec, create_network_func, save_network_file_path,
-                                       save_network_file_path=save_network_file_path,
-                                       number_of_historic_networks=number_of_historic_networks,
-                                       save_historic_every=save_historic_every,
-                                       historic_network_base_path='historic_network',
-                                       number_of_games=NUMBER_OF_GAMES_TO_RUN,
-                                       print_results_every=PRINT_RESULTS_EVERY_X,
-                                       learn_rate=LEARN_RATE,
-                                       batch_size=BATCH_SIZE,
-                                       CNN_ON=CNN_ON)
-else:
-	res = train_policy_gradients(game_spec, create_network_func, NETWORK_FILE_PATH,
-							 number_of_games=NUMBER_OF_GAMES_TO_RUN,
-							 batch_size=BATCH_SIZE,
-							 learn_rate=LEARN_RATE,
-							 print_results_every=PRINT_RESULTS_EVERY_X,
-							 save_network_file_path = save_network_file_path,
-							 CNN_ON = CNN_ON)
 
-if CNN_ON:
-	parameters = {'batch_size': BATCH_SIZE,
-				  'learn_rate': LEARN_RATE,
-				  'print_results_every': PRINT_RESULTS_EVERY_X,
-				  'network_file_path': NETWORK_FILE_PATH,
-				  'number_of_games': NUMBER_OF_GAMES_TO_RUN,
-				  'input_layer': input_layer,
-				  'number_of_CNNlayers': number_of_CNNlayers,
-				  'filter_shape': filter_shape,
-				  'filter_depth': filter_depth,
-				  'dense_width': dense_width,
-				  'save_network_file_path': save_network_file_path,
-				  'results': res[2]
-				  }
+res = train_policy_gradients(game_spec,
+							 create_network_func, 
+							 network_file_path = config['network_file_path'],
+							 number_of_games = config['number_of_games'],
+							 batch_size = config['batch_size'],
+							 learn_rate = config['learn_rate'],
+							 print_results_every = config['print_results_every'],
+							 save_network_file_path = config['save_network_file_path'],
+							 cnn_on = config['cnn_on'])
 
-else:
-	parameters = {	'batch_size':BATCH_SIZE,
-				'learn_rate':LEARN_RATE,
-				'print_results_every':PRINT_RESULTS_EVERY_X,
-				'network_file_path':NETWORK_FILE_PATH,
-				'number_of_games':NUMBER_OF_GAMES_TO_RUN,
-				'input_layer':input_layer,
-				'hidden_layers':HIDDEN_LAYERS,
-				'output_layer':output_layer,
-				'save_network_file_path':save_network_file_path,
-				'results':res[2]
-				}
-
-plt.save(parameters, save_network_file_path)
+config["results"] = res
+plt.save(config, save_network_file_path)
 
 
 # pdb.set_trace()

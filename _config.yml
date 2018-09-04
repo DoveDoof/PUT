@@ -1,13 +1,15 @@
 # Config file for executing policy_gradient.py
 # for yml syntax, see https://en.wikipedia.org/wiki/YAML#Design
 # install with: pip install PyYAML
+# IMPORTANT: scientific float notation needs a dot otherwise it gets interpreted as a string
+# incorrect: 1e-3, correct: 1.e-3
 
 # create convolutional structure instead of regular neural network
 cnn_on: false
 # every how many games to do a parameter update?
 batch_size: 100
 # learning rate
-learn_rate: 1e-3
+learn_rate: 1.e-3
 # after how many games to print the results
 print_results_every: 1000
 # path to save a network file

@@ -14,14 +14,14 @@ from common.visualisation import load_results
 def train_policy_gradients(game_spec,
                            create_network,
                            network_file_path,
-                           save_network_file_path=None,
-                           opponent_func=None,
-                           number_of_games=10000,
-                           print_results_every=1000,
-                           learn_rate=1e-4,
-                           batch_size=100,
-                           randomize_first_player=True,
-                           CNN_ON = 0):
+                           save_network_file_path = None,
+                           opponent_func = None,
+                           number_of_games = 10000,
+                           print_results_every = 1000,
+                           learn_rate = 1e-4,
+                           batch_size = 100,
+                           randomize_first_player = True,
+                           cnn_on = False):
     """Train a network using policy gradients
 
     Args:
@@ -38,11 +38,12 @@ def train_policy_gradients(game_spec,
         print_results_every (int): Prints results to std out every x games, also saves the network
         learn_rate (float):
         batch_size (int):
-        CNN_ON: if 1, then the convolutional neural network is used
+        cnn_on: if True, then the convolutional neural network is used
 
     Returns:
         (variables used in the final network : list, win rate: float)
     """
+
     save_network_file_path = save_network_file_path or network_file_path
     # create folder if it does not exist
     if save_network_file_path:
@@ -78,7 +79,7 @@ def train_policy_gradients(game_spec,
         results = collections.deque(maxlen=print_results_every)
 
         def make_training_move(board_state, side):
-            if CNN_ON:
+            if cnn_on:
                 # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.
                 # This is required for the CNN. The CNN takes the first 9 entries and forms a 3x3 board etc.
                 """If the 10 split 3x3 boards are desired, use create_3x3_board_states(board_state) here"""
@@ -87,10 +88,10 @@ def train_policy_gradients(game_spec,
                 np_board_state = np.array(board_state)
 
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
-            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, CNN_ON = CNN_ON)
-            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, CNN_ON = CNN_ON)
+            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
             move_for_game = move # The move returned to the game is in a different configuration than the CNN learn move
-            if CNN_ON:
+            if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
                 # the same should happen for the mini batch moves
                 move = create_3x3_board_states(np.reshape(move,[9,9]))   # The function requires a 9x9 array

@@ -125,7 +125,7 @@ def invert_board_state(board_state):
 
 
 def get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-                                valid_only=False, game_spec=None, CNN_ON=0):
+                                valid_only=False, game_spec=None, cnn_on=False):
     """Choose a move for the given board_state using a stochastic policy. A move is selected using the values from the
      output_layer as a categorical probability distribution to select a single move
 
@@ -140,7 +140,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
     Returns:
         (np.array) Its shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
     """
-    if CNN_ON:
+    if cnn_on:
         np_board_state = create_3x3_board_states(board_state)
     else:
         np_board_state = np.array(board_state)
@@ -151,7 +151,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
-    if CNN_ON:
+    if cnn_on:
         probability_of_actions = rearrange_3x3_board_to_normal(probability_of_actions)
 
     if valid_only:
@@ -180,7 +180,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
 
 
 def get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only=False,
-                                   game_spec=None, CNN_ON = 0):
+                                   game_spec=None, cnn_on = False):
     """Choose a move for the given board_state using a deterministic policy. A move is selected using the values from
     the output_layer and selecting the move with the highest score.
 
@@ -195,7 +195,7 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     Returns:
         (np.array) It's shape is (board_squares), and it is a 1 hot encoding for the move the network has chosen.
     """
-    if CNN_ON:
+    if cnn_on:
         np_board_state = create_3x3_board_states(board_state)
     else:
         np_board_state = np.array(board_state)
@@ -205,7 +205,7 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
-    if CNN_ON:
+    if cnn_on:
         # If this is the case, the actions are ordered as: first row all actions of first field, etc.
         # We need to rearrange such that it corresponds to the board_state from the game itself
         probability_of_actions = rearrange_3x3_board_to_normal(probability_of_actions)
@@ -239,7 +239,7 @@ def create_3x3_board_states(board_state):
     return correct_flat_board
 
 def rearrange_3x3_board_to_normal(flat_3x3_board):
-    # This function changes the list of 81 values from: first row is first miniboard, second row is second miniboard
+    # This function changes the list of 81 values from: first row is first field, second row is second field
     # etc. back to first row is equal to uttt board first row etc.
     normal_board = np.array([])
     for i in [0, 27, 54]:

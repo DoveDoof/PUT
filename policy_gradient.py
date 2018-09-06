@@ -56,7 +56,7 @@ else:
 
 res = train_policy_gradients(game_spec,
 							 create_network_func, 
-							 network_file_path = config['network_file_path'],
+							 load_network_file_path = config['load_network_file_path'],
 							 number_of_games = config['number_of_games'],
 							 batch_size = config['batch_size'],
 							 learn_rate = config['learn_rate'],
@@ -64,8 +64,8 @@ res = train_policy_gradients(game_spec,
 							 save_network_file_path = config['save_network_file_path'],
 							 cnn_on = config['cnn_on'])
 
-config["results"] = res
-plt.save(config, save_network_file_path)
+config["results"] = res[2]
+plt.save(config)
 
 
 # pdb.set_trace()

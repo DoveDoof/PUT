@@ -15,18 +15,21 @@ def plot(res, title='Winrate over time vs random player'):
 	plt.title(title)
 	plt.show()
 
-def save(parameters, network_folder):
-	# check if file was given instead of folder
+def save(data):
+	# data: type dictionary, should contain save_network_file_path and results
+
+	network_folder = data['save_network_file_path']
+	# if file was given (containing extention) then remove the filename from the path
 	if '.' in network_folder:
 		network_folder = '/'.join(network_folder.split('/')[:-1]) or '.'
 	if not isdir(network_folder):
 		print('Folder does not exist: ' + network_folder)
 	else:
 		# how many games were played in total
-		nr_games = str(parameters["results"][-1][0])
+		nr_games = str(data["results"][-1][0])
 		filename = time.strftime("./"+network_folder+"/_results_%Y-%m-%d_%H%M%S_"+nr_games+".json")
 		with open(filename, 'w') as outfile:
-			json.dump(parameters, outfile)
+			json.dump(data, outfile)
 
 def load(file):
 	# loads and returns results using json

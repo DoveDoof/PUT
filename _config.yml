@@ -5,20 +5,26 @@
 # incorrect: 1e-3, correct: 1.e-3
 
 # create convolutional structure instead of regular neural network
-cnn_on: false
+cnn_on: False
 # every how many games to do a parameter update?
-batch_size: 100
+batch_size: 1000
 # learning rate
 learn_rate: 1.e-3
 # after how many games to print the results
-print_results_every: 100
+print_results_every: 1000
 # path to save a network file
 save_network_file_path: networks/test/net.p
+# path to save the historic network
+historic_network_base_path: networks/test/hist
 # path to load a network file (change to above variable to continue training existing network, none otherwise)
 network_file_path: null
+# path to save config file
+config_path: networks/test/
 
 # total number of games to train
 number_of_games: 1000
+# change opponent's network with more recently updated network when winrate X is achieved
+update_opponent_winrate: 0.6
 
 # structure of regular neural network
 hidden_layers: !!python/tuple [90, 90, 90]

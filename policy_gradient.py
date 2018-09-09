@@ -57,7 +57,7 @@ if config['historic']:
 	print("Historic network is being used")
 	res = train_policy_gradients_vs_historic(game_spec,
 											 create_network_func,
-											 network_file_path = config['network_file_path'],
+											 load_network_file_path = config['load_network_file_path'],
 											 save_network_file_path = config['save_network_file_path'],
 											 number_of_historic_networks = 1,
 											 historic_network_base_path = config['historic_network_base_path'],
@@ -70,7 +70,7 @@ if config['historic']:
 else:
 	res = train_policy_gradients(game_spec,
 											 create_network_func,
-											 network_file_path = config['network_file_path'],
+											 load_network_file_path = config['load_network_file_path'],
 											 number_of_games = config['number_of_games'],
 											 batch_size = config['batch_size'],
 											 learn_rate = config['learn_rate'],
@@ -79,9 +79,8 @@ else:
 											 cnn_on = config['cnn_on'])
 
 
-
 config["results"] = res[2]
-plt.save(config,str(config['save_config_file_path']))
+plt.save(config)
 
 
 # pdb.set_trace()

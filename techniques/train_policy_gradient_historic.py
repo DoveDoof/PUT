@@ -11,7 +11,7 @@ from common.network_helpers import get_stochastic_network_move, load_network, sa
 from common.network_helpers import create_3x3_board_states
 from common.visualisation import load_results
 
-def train_policy_gradients_vs_historic(game_spec, create_network, network_file_path,
+def train_policy_gradients_vs_historic(game_spec, create_network, load_network_file_path,
                                        save_network_file_path = None,
                                        number_of_historic_networks = 1,
                                        historic_network_base_path = 'historic_network',
@@ -30,11 +30,11 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
             "slots" every x number of games. We have number_of_historic_networks "slots"
         number_of_historic_networks (int): We keep this many old networks to play against
         save_network_file_path (str): Optionally specifiy a path to use for saving the network, if unset then
-            the network_file_path param is used.
+            the load_network_file_path param is used.
         game_spec (games.base_game_spec.BaseGameSpec): The game we are playing
         create_network (->(input_layer : tf.placeholder, output_layer : tf.placeholder, variables : [tf.Variable])):
             Method that creates the network we will train.
-        network_file_path (str): path to the file with weights we want to load for this network
+        load_network_file_path (str): path to the file with weights we want to load for this network
         number_of_games (int): number of games to play before stopping
         update_opponent_winrate (float): the required winrate before updating the opponent to the newer agent
         print_results_every (int): Prints results to std out every x games, also saves the network
@@ -44,7 +44,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
     Returns:
         [tf.Variables] : trained variables used in the final network
     """
-    save_network_file_path = save_network_file_path or network_file_path
+    save_network_file_path = save_network_file_path or load_network_file_path
     # create folder if it does not exist
     if save_network_file_path:
         split = save_network_file_path.split('/')
@@ -77,10 +77,10 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
         base_episode_number = 0
         winrates = []
 
-        if network_file_path and os.path.isfile(network_file_path):
+        if load_network_file_path and os.path.isfile(load_network_file_path):
             print("loading pre-existing network")
-            load_network(session, variables, network_file_path)
-            base_episode_number, winrates = load_results(network_file_path)
+            load_network(session, variables, load_network_file_path)
+            base_episode_number, winrates = load_results(load_network_file_path)
 
         def make_move_historical(historical_network_index, board_state, side):
             net = historical_networks[historical_network_index]
@@ -112,19 +112,19 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
                 mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move_for_game.argmax())
         """-------------------------------"""
-#        if os.path.isfile(network_file_path):
+#        if os.path.isfile(load_network_file_path):
 #            print("loading pre existing weights")
-#            load_network(session, variables, network_file_path)
+#            load_network(session, variables, load_network_file_path)
 #        else:
 #            print("Could not find previous weights so initialising randomly")
 
         for i in range(number_of_historic_networks):
             if os.path.isfile(historic_network_base_path + str(i) + '.p'):
                 load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
-            elif os.path.isfile(str(network_file_path)):
+            elif os.path.isfile(load_network_file_path):
                 # if we can't load a historical file use the current network weights
                 print('Warning: loading historical file failed. Current net is being used.')
-                load_network(session, historical_networks[i][2], network_file_path)
+                load_network(session, historical_networks[i][2], load_network_file_path)
 
         first_bot = True  # When true, the agent did not yet achieve high enough winrate, so it plays against a random bot
         win_ticks = 0 # registers the amount of times the agent has a high enough winrate to update its opponent
@@ -197,13 +197,13 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
                                  historic_network_base_path + str(current_historical_index) + '.p')
 
                     # also save to the main network file
-                    save_network(session, variables, save_network_file_path or network_file_path)
+                    save_network(session, variables, save_network_file_path or load_network_file_path)
 
                     current_historical_index += 1 # Not used when we only have 1 historic network
                     current_historical_index %= number_of_historic_networks
 
         # save our final weights
-        save_network(session, variables, save_network_file_path or network_file_path)
+        save_network(session, variables, save_network_file_path or load_network_file_path)
 
     return variables, _win_rate(print_results_every, results), winrates
 

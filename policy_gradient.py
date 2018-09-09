@@ -53,33 +53,35 @@ else:
 											config['hidden_layers'],
 											config['output_layer'])
 
-"""
-res = train_policy_gradients(game_spec,
-							 create_network_func, 
-							 network_file_path = config['network_file_path'],
-							 number_of_games = config['number_of_games'],
-							 batch_size = config['batch_size'],
-							 learn_rate = config['learn_rate'],
-							 print_results_every = config['print_results_every'],
-							 save_network_file_path = config['save_network_file_path'],
-							 cnn_on = config['cnn_on'])
-"""
-res = train_policy_gradients_vs_historic(game_spec,
-								create_network_func,
-								network_file_path = config['network_file_path'],
-                                save_network_file_path = config['save_network_file_path'],
-                                number_of_historic_networks = 1,
-                                #save_historic_every = 10000,
-                                historic_network_base_path = config['historic_network_base_path'],
-								number_of_games = config['number_of_games'],
-                                update_opponent_winrate = config['update_opponent_winrate'],
-                                print_results_every = config['print_results_every'],
-                                learn_rate = config['learn_rate'],
-                                batch_size = config['batch_size'],
-                                cnn_on = config['cnn_on'])
+if config['historic']:
+	print("Historic network is being used")
+	res = train_policy_gradients_vs_historic(game_spec,
+											 create_network_func,
+											 network_file_path = config['network_file_path'],
+											 save_network_file_path = config['save_network_file_path'],
+											 number_of_historic_networks = 1,
+											 historic_network_base_path = config['historic_network_base_path'],
+											 number_of_games = config['number_of_games'],
+											 update_opponent_winrate = config['update_opponent_winrate'],
+											 print_results_every = config['print_results_every'],
+											 learn_rate = config['learn_rate'],
+											 batch_size = config['batch_size'],
+											 cnn_on = config['cnn_on'])
+else:
+	res = train_policy_gradients(game_spec,
+											 create_network_func,
+											 network_file_path = config['network_file_path'],
+											 number_of_games = config['number_of_games'],
+											 batch_size = config['batch_size'],
+											 learn_rate = config['learn_rate'],
+											 print_results_every = config['print_results_every'],
+											 save_network_file_path = config['save_network_file_path'],
+											 cnn_on = config['cnn_on'])
+
+
 
 config["results"] = res[2]
-plt.save(config)
+plt.save(config,str(config['save_config_file_path']))
 
 
 # pdb.set_trace()

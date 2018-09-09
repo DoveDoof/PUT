@@ -123,7 +123,6 @@ def train_policy_gradients_vs_historic(game_spec, create_network, network_file_p
                 load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
             elif os.path.isfile(str(network_file_path)):
                 # if we can't load a historical file use the current network weights
-                """------------------------------Add random bot for the first try------------------------------------"""
                 print('Warning: loading historical file failed. Current net is being used.')
                 load_network(session, historical_networks[i][2], network_file_path)
 

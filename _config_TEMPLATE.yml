@@ -27,6 +27,8 @@ save_config_file_path: networks/test/config.json
 number_of_games: 15000
 # change opponent's network with more recently updated network when winrate X is achieved
 update_opponent_winrate: 0.65
+# Determines how many moves are made stochastically and how many deterministically for learning. eps = 0 is fully deterministic
+eps: 0.1
 
 # structure of regular neural network
 hidden_layers: !!python/tuple [90, 90, 90]

@@ -21,7 +21,8 @@ def train_policy_gradients(game_spec,
                            learn_rate = 1e-4,
                            batch_size = 100,
                            randomize_first_player = True,
-                           cnn_on = False):
+                           cnn_on = False,
+                           eps = 0.1):
     """Train a network using policy gradients
 
     Args:
@@ -86,10 +87,13 @@ def train_policy_gradients(game_spec,
                 np_board_state = create_3x3_board_states(board_state)
             else:
                 np_board_state = np.array(board_state)
-
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
-            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
-            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+
+            rand_numb = random.uniform(0., 1.)
+            if rand_numb <= eps:
+                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+            else:
+                move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
             move_for_game = move # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),

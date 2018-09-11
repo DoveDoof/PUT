@@ -20,7 +20,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        print_results_every = 100,
                                        learn_rate = 1e-4,
                                        batch_size = 100,
-                                       cnn_on = False):
+                                       cnn_on = False,
+                                       eps = 0.1):
     """Train a network against itself and over time store new version of itself to play against.
 
     Args:
@@ -100,7 +101,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             mini_batch_board_states.append(np_board_state * side)
 
             rand_numb = random.uniform(0.,1.)
-            if rand_numb <= 0.1:
+            if rand_numb <= eps:
                 move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                                 valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
             else:

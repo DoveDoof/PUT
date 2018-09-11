@@ -17,7 +17,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        historic_network_base_path = 'historic_network',
                                        number_of_games = 100000,
                                        update_opponent_winrate = 0.65,
-                                       print_results_every = 1000,
+                                       print_results_every = 100,
                                        learn_rate = 1e-4,
                                        batch_size = 100,
                                        cnn_on = False):
@@ -98,10 +98,14 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                 np_board_state = np.array(board_state)
 
             mini_batch_board_states.append(np_board_state * side)
-            #move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-            #                                   valid_only=True, game_spec=game_spec, CNN_ON=cnn_on)
-            move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
-                                                  valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+
+            rand_numb = random.uniform(0.,1.)
+            if rand_numb <= 0.1:
+                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
+                                                valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+            else:
+                move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
+                                                valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
             move_for_game = move  # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),

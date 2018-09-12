@@ -4,6 +4,8 @@
 # IMPORTANT: scientific float notation needs a dot otherwise it gets interpreted as a string
 # incorrect: 1e-3, correct: 1.e-3
 
+# Determines whether the moves are deterministic or stochastic. True is deterministic, False is stochastic
+deterministic: True
 # determine historic play
 historic: False
 # create convolutional structure instead of regular neural network

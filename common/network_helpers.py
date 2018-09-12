@@ -1,6 +1,7 @@
 import operator
 import pickle
 from functools import reduce
+from random import randint
 
 import numpy as np
 import tensorflow as tf
@@ -221,6 +222,16 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     one_hot = np.zeros(len(probability_of_actions))
     one_hot[move] = 1.
     return one_hot # Returns a move according to original board state logic
+
+def get_random_network_move(board_state, game_spec=None):
+
+    available_moves = list(game_spec.available_moves(board_state))
+    rand_numb = randint(0,len(available_moves) - 1)
+    temp = available_moves[rand_numb]
+    move = np.zeros((9,9), dtype = int)
+    move[temp] = 1
+    return move
+
 
 def create_3x3_board_states(board_state):
     # We must have the first 3x3 board as first 9 entries of the list, second 3x3 board as next 9 entries etc.

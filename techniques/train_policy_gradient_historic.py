@@ -7,7 +7,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from common.network_helpers import get_stochastic_network_move, load_network, save_network, get_deterministic_network_move
+from common.network_helpers import get_stochastic_network_move, load_network, save_network, get_deterministic_network_move, get_random_network_move
 from common.network_helpers import create_3x3_board_states
 from common.visualisation import load_results
 
@@ -21,7 +21,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        learn_rate = 1e-4,
                                        batch_size = 100,
                                        cnn_on = False,
-                                       eps = 0.1):
+                                       eps = 0.1,
+                                       deterministic = True):
     """Train a network against itself and over time store new version of itself to play against.
 
     Args:
@@ -102,11 +103,13 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
             rand_numb = random.uniform(0.,1.)
             if rand_numb <= eps:
-                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-                                                valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
-            else:
+                move = get_random_network_move(board_state, game_spec)
+            elif deterministic:
                 move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
-                                                valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+                                                      valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
+            else:
+                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
+                                                   valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
             move_for_game = move  # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),

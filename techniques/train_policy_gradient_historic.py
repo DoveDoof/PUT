@@ -102,7 +102,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             mini_batch_board_states.append(np_board_state * side)
 
             rand_numb = random.uniform(0.,1.)
-            if rand_numb <= eps:
+            if rand_numb < eps:
                 move = get_random_network_move(board_state, game_spec)
             elif deterministic:
                 move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,

@@ -68,7 +68,8 @@ if config['historic']:
 											 batch_size = config['batch_size'],
 											 cnn_on = config['cnn_on'],
 											 eps = config['eps'],
-											 deterministic = config['deterministic'])
+											 deterministic = config['deterministic'],
+											 min_win_ticks = config['min_win_ticks'])
 else:
 	res = train_policy_gradients(game_spec,
 											 create_network_func,

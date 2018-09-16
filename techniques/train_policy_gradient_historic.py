@@ -15,14 +15,15 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        save_network_file_path = None,
                                        number_of_historic_networks = 1,
                                        historic_network_base_path = 'historic_network',
-                                       number_of_games = 100000,
+                                       number_of_games = 10000,
                                        update_opponent_winrate = 0.65,
                                        print_results_every = 100,
-                                       learn_rate = 1e-4,
+                                       learn_rate = 1e-3,
                                        batch_size = 100,
                                        cnn_on = False,
                                        eps = 0.1,
-                                       deterministic = True):
+                                       deterministic = True,
+                                       min_win_ticks = 3):
     """Train a network against itself and over time store new version of itself to play against.
 
     Args:
@@ -42,6 +43,10 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
         print_results_every (int): Prints results to std out every x games, also saves the network
         learn_rate (float):
         batch_size (int):
+        cnn_on (bool): use convolutional or regular neural network
+        eps (float): fraction of moves made randomly
+        deterministic (bool): use deterministic or stochastic move selection
+        min_win_ticks (int): number of times the networks winrate needs to exceed update_opponent_winrate to update
 
     Returns:
         [tf.Variables] : trained variables used in the final network
@@ -119,17 +124,12 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             else:
                 mini_batch_moves.append(move)
             return game_spec.flat_move_to_tuple(move_for_game.argmax())
-        """-------------------------------"""
-#        if os.path.isfile(load_network_file_path):
-#            print("loading pre existing weights")
-#            load_network(session, variables, load_network_file_path)
-#        else:
-#            print("Could not find previous weights so initialising randomly")
+
 
         for i in range(number_of_historic_networks):
             if os.path.isfile(historic_network_base_path + str(i) + '.p'):
                 load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
-            elif os.path.isfile(load_network_file_path):
+            elif load_network_file_path and os.path.isfile(load_network_file_path):
                 # if we can't load a historical file use the current network weights
                 print('Warning: loading historical file failed. Current net is being used.')
                 load_network(session, historical_networks[i][2], load_network_file_path)
@@ -180,10 +180,6 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                 del mini_batch_moves[:]
                 del mini_batch_rewards[:]
 
-#            if episode_number % print_results_every == 0:
-#                print("episode: %s average result: %s" % (episode_number, np.mean(results)))
-#                #if np.mean(results)
-
             if episode_number % print_results_every == 0:
                 winrate = _win_rate(print_results_every, results)
                 if winrate == 0:
@@ -196,16 +192,19 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             # Update opponent when winrate is high enough and it happens for a longer period
             if (episode_number % print_results_every == 0) and (winrate >= update_opponent_winrate):
                 win_ticks += 1
-                if win_ticks >= 3:
+                if win_ticks >= min_win_ticks:
                     win_ticks = 0
                     first_bot = False
-                    print("saving historical network %s", current_historical_index) # Overwrite historic opponent with current network
-                    save_network(session, variables, historic_network_base_path + str(current_historical_index) + '.p')
-                    load_network(session, historical_networks[current_historical_index][2],
-                                 historic_network_base_path + str(current_historical_index) + '.p')
+                    print("saving historical network %s at episode %s." % (current_historical_index, base_episode_number+episode_number)) # Overwrite historic opponent with current network
+                    historic_filename = historic_network_base_path + str(current_historical_index) + '.p'
+                    save_network(session, variables, historic_filename)
+                    load_network(session, historical_networks[current_historical_index][2], historic_filename)
 
                     # also save to the main network file
-                    save_network(session, variables, save_network_file_path or load_network_file_path)
+                    save_network(session, 
+                        variables, 
+                        (save_network_file_path or load_network_file_path)[:-2] + "_ep"+str(base_episode_number+episode_number) + ".p"
+                        )
 
                     current_historical_index += 1 # Not used when we only have 1 historic network
                     current_historical_index %= number_of_historic_networks

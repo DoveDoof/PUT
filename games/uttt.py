@@ -177,7 +177,13 @@ def play_game(plus_player_func, minus_player_func, log=0):
 
         winner = has_winner(board_state)
         if winner != _mb_unfinished:
-            winner_text = 'X ('+str(_mb_X)+')' if winner == _mb_X else 'O ('+str(_mb_O)+')'
+            if winner == _mb_X:
+                winner_text = 'X ('+str(_mb_X)+')'
+            elif winner == _mb_O:
+                winner_text = 'O ('+str(_mb_O)+')'
+            else:
+                winner_text = 'no winner'
+
             if log:
                 print_board_state(board_state, '')
                 print("we have a winner, side: %s" % winner_text)

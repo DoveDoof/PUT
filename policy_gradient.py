@@ -53,16 +53,36 @@ else:
 											config['hidden_layers'],
 											config['output_layer'])
 
+if config['historic']:
+	print("Historic network is being used")
+	res = train_policy_gradients_vs_historic(game_spec,
+											 create_network_func,
+											 load_network_file_path = config['load_network_file_path'],
+											 save_network_file_path = config['save_network_file_path'],
+											 number_of_historic_networks = 1,
+											 historic_network_base_path = config['historic_network_base_path'],
+											 number_of_games = config['number_of_games'],
+											 update_opponent_winrate = config['update_opponent_winrate'],
+											 print_results_every = config['print_results_every'],
+											 learn_rate = config['learn_rate'],
+											 batch_size = config['batch_size'],
+											 cnn_on = config['cnn_on'],
+											 eps = config['eps'],
+											 deterministic = config['deterministic'],
+											 min_win_ticks = config['min_win_ticks'])
+else:
+	res = train_policy_gradients(game_spec,
+											 create_network_func,
+											 load_network_file_path = config['load_network_file_path'],
+											 number_of_games = config['number_of_games'],
+											 batch_size = config['batch_size'],
+											 learn_rate = config['learn_rate'],
+											 print_results_every = config['print_results_every'],
+											 save_network_file_path = config['save_network_file_path'],
+											 cnn_on = config['cnn_on'],
+								 			 eps = config['eps'],
+								 			 deterministic = config['deterministic'])
 
-res = train_policy_gradients(game_spec,
-							 create_network_func, 
-							 load_network_file_path = config['load_network_file_path'],
-							 number_of_games = config['number_of_games'],
-							 batch_size = config['batch_size'],
-							 learn_rate = config['learn_rate'],
-							 print_results_every = config['print_results_every'],
-							 save_network_file_path = config['save_network_file_path'],
-							 cnn_on = config['cnn_on'])
 
 config["results"] = res[2]
 plt.save(config)

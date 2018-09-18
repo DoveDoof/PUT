@@ -20,6 +20,8 @@ import numpy as np
 from pprint import pprint
 from common.base_game_spec import BaseGameSpec
 from techniques.min_max import evaluate
+import techniques.monte_carlo as mc
+
 
 _mb_unfinished = 8
 _mb_available = 7
@@ -122,8 +124,13 @@ def available_moves(board_state):
 
 
 def has_winner(board_state):
+    # +1 for player X, -1 for player O, 0 for draw, None for no winner yet
     macroboard = tuple(board_state[-1][i*3:(i+1)*3] for i in range(3))
-    return _winner_microboard(macroboard)
+    winner = _winner_microboard(macroboard)
+    if winner == _mb_unfinished:
+        return None
+    else:
+        return winner
 
 
 def evaluate(board_state):
@@ -176,7 +183,7 @@ def play_game(plus_player_func, minus_player_func, log=0):
         board_state = apply_move(board_state, move, player_turn)
 
         winner = has_winner(board_state)
-        if winner != _mb_unfinished:
+        if winner != None:
             if winner == _mb_X:
                 winner_text = 'X ('+str(_mb_X)+')'
             elif winner == _mb_O:
@@ -205,6 +212,7 @@ def manual_player(board_state, side):
     except (ValueError, IndexError):
         print("Invalid input, playing random move.")
         return random.choice(moves)
+
 
 def print_board_state(board_state, side, print_mb = True):
     for i in range(9):
@@ -243,6 +251,14 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
 
     def get_manual_player_func(self):
         return manual_player
+
+    def monte_carlo_player(self, board_state, side):
+        number_of_samples = 50
+        _, move = mc.monte_carlo_tree_search(self, board_state, side, number_of_samples)
+        return move
+
+    def get_monte_carlo_player_func(self):
+        return self.monte_carlo_player
 
     def board_dimensions(self):
         return 10, 9

@@ -1,4 +1,5 @@
 import unittest as test
+import time
 
 import games.uttt as ut
 import techniques.monte_carlo as mc
@@ -7,6 +8,7 @@ import techniques.monte_carlo as mc
 class TestUltimateTicTacToe(test.TestCase):
 	@test.skip
 	def test_move(self):
+		# Test single move of monte carlo tree search algorithm
 		game_spec = ut.UltimateTicTacToeGameSpec()
 
 
@@ -32,8 +34,9 @@ class TestUltimateTicTacToe(test.TestCase):
 
 
 
-	# @test.skip
+	@test.skip
 	def test_game(self):
+		# test game against monte carlo tree search algorithm
 		game_spec = ut.UltimateTicTacToeGameSpec()
 
 		player_func = game_spec.get_monte_carlo_player_func()
@@ -41,3 +44,30 @@ class TestUltimateTicTacToe(test.TestCase):
 		# opponent_func = game_spec.get_manual_player_func()
 
 		game_spec.play_game(player_func, opponent_func, log = 1)
+
+	def test_performance(self):
+		# test performance of mcts against random bot
+		game_spec = ut.UltimateTicTacToeGameSpec()
+
+		mcts_func = game_spec.get_monte_carlo_player_func()
+		rand_func = game_spec.get_random_player_func()
+
+		n = 500
+
+		t = time.perf_counter()
+		resultsX = [ut.play_game(mcts_func, rand_func) for i in range(n)]
+		resultsO = [ut.play_game(rand_func, mcts_func) for i in range(n)]
+		elapsed_time = time.perf_counter() - t
+
+		print('Elapsed time:', elapsed_time)
+		print('mcts as X:')
+		print('mcts wins: ', resultsX.count(1))
+		print('random wins: ', resultsX.count(-1))
+		print('Draws        : ', resultsX.count(0))
+		print('Winrate      : ', 0.5 + 1.*sum(resultsX)/2/n)
+
+		print('mcts as O:')
+		print('mcts wins: ', resultsO.count(1))
+		print('random wins: ', resultsO.count(-1))
+		print('Draws        : ', resultsO.count(0))
+		print('Winrate      : ', 0.5 + 1.*sum(resultsO)/2/n)

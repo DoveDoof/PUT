@@ -1,7 +1,6 @@
 import unittest as test
 from pprint import pprint
 
-import random
 import time
 import numpy as np
 import games.uttt as ut
@@ -14,7 +13,6 @@ class TestUltimateTicTacToe(test.TestCase):
 
 	# @test.skip
 	def test_game(self):
-		# random.seed(1)
 		ut.play_game(ut.random_player, ut.random_player, log = 2)
 	
 	@test.skip

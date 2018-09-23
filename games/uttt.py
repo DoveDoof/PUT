@@ -257,8 +257,16 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
         _, move = mc.monte_carlo_tree_search(self, board_state, side, number_of_samples)
         return move
 
+    def monte_carlo_uct_player(self, board_state, side):
+        number_of_samples = 50
+        _, move = mc.monte_carlo_tree_search_uct(self, board_state, side, number_of_samples)
+        return move
+
     def get_monte_carlo_player_func(self):
         return self.monte_carlo_player
+
+    def get_monte_carlo_uct_player_func(self):
+        return self.monte_carlo_uct_player
 
     def board_dimensions(self):
         return 10, 9

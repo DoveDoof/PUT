@@ -22,6 +22,8 @@ learn_rate: 1.e-3
 eps: 0.1
 # Determines whether the moves are deterministic or stochastic. True is deterministic, False is stochastic
 deterministic: True
+# Option to incorporate MCTS with policy gradient
+mcts: True
 
 # --------------------- Historic ------------------------------
 historic: False

@@ -87,9 +87,9 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
         current_board_state = board_state
         first_unvisited_node = True
         rollout_path = []
-        result = 0
+        result = None
 
-        while result == 0:
+        while result == None:
             move_states = {move: game_spec.apply_move(current_board_state, move, current_side)
                            for move in game_spec.available_moves(current_board_state)}
 
@@ -126,7 +126,8 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
 
     move_states = {move: game_spec.apply_move(board_state, move, side) for move in game_spec.available_moves(board_state)}
 
-    move = max(move_states, key=lambda x: state_results[move_states[x]] / state_samples[move_states[x]])
+    move = max(move_states, key=lambda x: state_results[move_states[x]] / (state_samples[move_states[x]] + 1e-8))
+
 
     return state_results[move_states[move]] / state_samples[move_states[move]], move
 

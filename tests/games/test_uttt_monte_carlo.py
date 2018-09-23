@@ -49,29 +49,35 @@ class TestUltimateTicTacToe(test.TestCase):
 		# test performance of mcts against random bot
 		game_spec = ut.UltimateTicTacToeGameSpec()
 
+		n = 10
+		number_of_samples = 27
+
 		mcts_uct_func = game_spec.get_monte_carlo_uct_player_func()
-		mcts_func = game_spec.get_monte_carlo_player_func()
+		mcts_func = game_spec.get_monte_carlo_player_func(number_of_samples)
 		rand_func = game_spec.get_random_player_func()
 
-		n = 27
+		t = time.perf_counter()
+		ut.play_game(mcts_func, rand_func)
+		elapsed_time = time.perf_counter() - t
+		print('One game takes %s seconds, so %s will take %s seconds' % (elapsed_time, n, n*elapsed_time))
 
 		t = time.perf_counter()
-		resultsX = [ut.play_game(mcts_uct_func, mcts_func) for i in range(n)]
-		resultsO = [ut.play_game(mcts_func, mcts_uct_func) for i in range(n)]
+		resultsX = [ut.play_game(mcts_func, rand_func) for i in range(n)]
+		resultsO = [ut.play_game(rand_func, mcts_func) for i in range(n)]
 		elapsed_time = time.perf_counter() - t
 
 		print('Elapsed time:', elapsed_time)
-		print('mcts uct as X:')
-		print('mcts uct wins: ', resultsX.count(1))
+		print('mcts as X:')
+		print('mcts wins: ', resultsX.count(1))
 		print('random wins: ', resultsX.count(-1))
 		print('Draws        : ', resultsX.count(0))
 		print('Winrate      : ', 0.5 + 1.*sum(resultsX)/2/n)
 
-		print('mcts uct as O:')
-		print('mcts uct wins: ', resultsO.count(-1))
+		print('mcts as O:')
+		print('mcts wins: ', resultsO.count(-1))
 		print('random wins: ', resultsO.count(1))
 		print('Draws        : ', resultsO.count(0))
-		print('Winrate      : ', 1 - 0.5 - 1.*sum(resultsO)/2/n)
+		print('Winrate      : ', 0.5 - 1.*sum(resultsO)/2/n)
 
 if __name__ == '__main__':
 	test.main()

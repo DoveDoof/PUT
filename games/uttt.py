@@ -17,7 +17,7 @@ import itertools
 import random
 import numpy as np
 
-from pprint import pprint
+from functools import partial
 from common.base_game_spec import BaseGameSpec
 from techniques.min_max import evaluate
 import techniques.monte_carlo as mc
@@ -252,21 +252,15 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
     def get_manual_player_func(self):
         return manual_player
 
-    def monte_carlo_player(self, board_state, side):
-        number_of_samples = 50
-        _, move = mc.monte_carlo_tree_search(self, board_state, side, number_of_samples)
+    def monte_carlo_player(self, board_state, side, uct, number_of_samples):
+        if uct:
+            _, move = mc.monte_carlo_tree_search_uct(self, board_state, side, number_of_samples)
+        else:
+            _, move = mc.monte_carlo_tree_search(self, board_state, side, number_of_samples)
         return move
 
-    def monte_carlo_uct_player(self, board_state, side):
-        number_of_samples = 50
-        _, move = mc.monte_carlo_tree_search_uct(self, board_state, side, number_of_samples)
-        return move
-
-    def get_monte_carlo_player_func(self):
-        return self.monte_carlo_player
-
-    def get_monte_carlo_uct_player_func(self):
-        return self.monte_carlo_uct_player
+    def get_monte_carlo_player_func(self, number_of_samples, uct = True):
+        return partial(self.monte_carlo_player, uct = uct, number_of_samples = number_of_samples)
 
     def board_dimensions(self):
         return 10, 9

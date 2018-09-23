@@ -9,6 +9,7 @@ import tensorflow as tf
 from common.network_helpers import create_3x3_board_states
 from common.network_helpers import load_network, get_stochastic_network_move, save_network, get_deterministic_network_move, get_random_network_move
 from common.visualisation import load_results
+from techniques.monte_carlo import monte_carlo_tree_search
 
 
 def train_policy_gradients(game_spec,
@@ -23,7 +24,8 @@ def train_policy_gradients(game_spec,
                            randomize_first_player = True,
                            cnn_on = False,
                            eps = 0.1,
-                           deterministic = True):
+                           deterministic = True,
+                           mcts = False):
     """Train a network using policy gradients
 
     Args:

@@ -23,6 +23,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        cnn_on = False,
                                        eps = 0.1,
                                        deterministic = True,
+                                       mcts = False,
                                        min_win_ticks = 3):
     """Train a network against itself and over time store new version of itself to play against.
 

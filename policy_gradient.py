@@ -69,6 +69,7 @@ if config['historic']:
 											 cnn_on = config['cnn_on'],
 											 eps = config['eps'],
 											 deterministic = config['deterministic'],
+											 mcts = config['mcts'],
 											 min_win_ticks = config['min_win_ticks'])
 else:
 	res = train_policy_gradients(game_spec,
@@ -81,7 +82,8 @@ else:
 											 save_network_file_path = config['save_network_file_path'],
 											 cnn_on = config['cnn_on'],
 								 			 eps = config['eps'],
-								 			 deterministic = config['deterministic'])
+								 			 deterministic = config['deterministic'],
+								 			mcts=config['mcts'])
 
 
 config["results"] = res[2]

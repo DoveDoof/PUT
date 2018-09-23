@@ -2,7 +2,6 @@ import collections
 import random
 import math
 
-
 def _monte_carlo_sample(game_spec, board_state, side):
     """Sample a single rollout from the current board_state and side. Moves are made to the current board_state until we
      reach a terminal state then the result and the first move made to get there is returned.
@@ -17,8 +16,9 @@ def _monte_carlo_sample(game_spec, board_state, side):
             the minus player, 0 for a draw
     """
     result = game_spec.has_winner(board_state)
-    if result != 0:
+    if result != None:
         return result, None
+
     moves = list(game_spec.available_moves(board_state))
     if not moves:
         return 0, None
@@ -52,7 +52,11 @@ def monte_carlo_tree_search(game_spec, board_state, side, number_of_samples):
         move_samples[move] += 1
 
     # get the move with the best average result
-    move = max(move_wins, key=lambda x: move_wins.get(x) / move_samples[move])
+    # if all samples lost, move_wins is empty, choose least sampled move
+    if len(move_wins)==0:
+        move = min(move_samples, key=move_samples.get)
+    else:
+        move = max(move_wins, key=lambda x: move_wins.get(x) / move_samples[move])
 
     return move_wins[move] / move_samples[move], move
 
@@ -83,9 +87,9 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
         current_board_state = board_state
         first_unvisited_node = True
         rollout_path = []
-        result = 0
+        result = None
 
-        while result == 0:
+        while result == None:
             move_states = {move: game_spec.apply_move(current_board_state, move, current_side)
                            for move in game_spec.available_moves(current_board_state)}
 
@@ -122,7 +126,8 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
 
     move_states = {move: game_spec.apply_move(board_state, move, side) for move in game_spec.available_moves(board_state)}
 
-    move = max(move_states, key=lambda x: state_results[move_states[x]] / state_samples[move_states[x]])
+    # If a certain state is not sampled by MCTS, state_results is divided by 10e3 to make sure this is not chosen.
+    move = max(move_states, key=lambda x: state_results[move_states[x]] / (state_samples[move_states[x]] if state_samples[move_states[x]] > 0 else 10e3))
 
     return state_results[move_states[move]] / state_samples[move_states[move]], move
 

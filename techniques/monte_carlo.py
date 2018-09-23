@@ -126,8 +126,8 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
 
     move_states = {move: game_spec.apply_move(board_state, move, side) for move in game_spec.available_moves(board_state)}
 
-    move = max(move_states, key=lambda x: state_results[move_states[x]] / (state_samples[move_states[x]] + 1e-8))
-
+    # If a certain state is not sampled by MCTS, state_results is divided by 10e3 to make sure this is not chosen.
+    move = max(move_states, key=lambda x: state_results[move_states[x]] / (state_samples[move_states[x]] if state_samples[move_states[x]] > 0 else 10e3))
 
     return state_results[move_states[move]] / state_samples[move_states[move]], move
 

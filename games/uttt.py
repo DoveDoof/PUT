@@ -36,6 +36,10 @@ def _new_board():
     # return ((0,)*9,)*10
 
 def apply_move(board_state, move, side):
+    # There is a problem when the move is presented as a list of 81 elements where they are all 0 except for the
+    # desired position. This functions needs an x and y coordinate.
+    if len(move) == 81:
+        move = UltimateTicTacToeGameSpec().flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
     move_x, move_y = move
 
     # update board
@@ -259,7 +263,7 @@ class UltimateTicTacToeGameSpec(BaseGameSpec):
             _, move = mc.monte_carlo_tree_search(self, board_state, side, number_of_samples)
         return move
 
-    def get_monte_carlo_player_func(self, number_of_samples, uct = True):
+    def get_monte_carlo_player_func(self, number_of_samples, uct = False):
         return partial(self.monte_carlo_player, uct = uct, number_of_samples = number_of_samples)
 
     def board_dimensions(self):

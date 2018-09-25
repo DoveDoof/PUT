@@ -57,7 +57,11 @@ def train_policy_gradients(game_spec,
             os.makedirs(directory)
             print("created directory " + directory)
 
-    opponent_func = opponent_func or game_spec.get_random_player_func()
+    if mcts:
+        opponent_func = game_spec.get_monte_carlo_player_func(number_of_samples = 27)
+    else:
+        opponent_func = opponent_func or game_spec.get_random_player_func()
+
     reward_placeholder = tf.placeholder("float", shape=(None,))
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
 
@@ -99,9 +103,13 @@ def train_policy_gradients(game_spec,
                 move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
                                                       valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
             else:
-                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
-                                                   valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
-            move_for_game = move # The move returned to the game is in a different configuration than the CNN learn move
+                if mcts:
+                    _,move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+                            input_layer, output_layer, True, cnn_on, True)
+                else:
+                    move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
+                                                   valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
+            move_for_game = np.asarray(move) # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
                 # the same should happen for the mini batch moves

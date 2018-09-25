@@ -28,8 +28,10 @@ def _monte_carlo_sample(game_spec, board_state, side, policy = False, session = 
 
     # select a random move
     if policy:
+        # get stochastic network move gives wrong type (array of 81 elements instead of tuple), so we need to reconfigure
         move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                             valid_only, game_spec, cnn_on)
+        move = flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
     else:
         move = random.choice(moves)
     result, next_move = _monte_carlo_sample(game_spec, game_spec.apply_move(board_state, move, side), -side, policy,
@@ -57,23 +59,17 @@ def monte_carlo_tree_search(game_spec, board_state, side, number_of_samples, ses
         result, move = _monte_carlo_sample(game_spec, board_state, side, policy, session, input_layer,
                         output_layer, valid_only, cnn_on)
         # store the result and a count of the number of times we have tried this move
-        # When using mcts with network, the move is a list of 81 values. The move which is used to keep track of the
-        # number of tries must be tuple:
-        if policy:
-            dict_move = flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
-        else:
-            dict_move = move
-
         if result == side:
-            move_wins[dict_move] += 1
-        move_samples[dict_move] += 1
+            move_wins[move] += 1
+        move_samples[move] += 1
     # get the move with the best average result
     # if all samples lost, move_wins is empty, choose least sampled move
     if len(move_wins)==0:
         move = min(move_samples, key=move_samples.get)
     else:
-        move = max(move_wins, key=lambda x: move_wins.get(x) / move_samples[dict_move])
+        move = max(move_wins, key=lambda x: move_wins.get(x) / move_samples[move])
     if policy:
+        # When a policy is used, we want to return a list of length 81 since this is used for the minibatch moves
         listofzeros = [0] * 81
         flat_move = tuple_move_to_flat(move)
         listofzeros[flat_move] = 1

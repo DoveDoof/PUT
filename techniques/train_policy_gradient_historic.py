@@ -10,6 +10,7 @@ import tensorflow as tf
 from common.network_helpers import get_stochastic_network_move, load_network, save_network, get_deterministic_network_move, get_random_network_move
 from common.network_helpers import create_3x3_board_states
 from common.visualisation import load_results
+from techniques.monte_carlo import monte_carlo_tree_search
 
 def train_policy_gradients_vs_historic(game_spec, create_network, load_network_file_path,
                                        save_network_file_path = None,
@@ -94,10 +95,15 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             net = historical_networks[historical_network_index]
             #move = get_stochastic_network_move(session, net[0], net[1], board_state, side,
             #                                  valid_only=True, game_spec=game_spec, CNN_ON=cnn_on)
-            move = get_deterministic_network_move(session, net[0], net[1], board_state, side,
+            if mcts:
+                _,move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+                            input_layer, output_layer, True, cnn_on, True)
+            else:
+                move = get_deterministic_network_move(session, net[0], net[1], board_state, side,
                                                 valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
 
-            return game_spec.flat_move_to_tuple(move.argmax())
+            move_for_game = np.asarray(move) # move must be an array, mcts doesn't return this
+            return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
         def make_training_move(board_state, side):
             if cnn_on:
@@ -114,9 +120,14 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                 move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
                                                       valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
             else:
-                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
+                if mcts:
+                    _, move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+                                                      input_layer, output_layer, True, cnn_on, True)
+                else:
+                    move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                                    valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
-            move_for_game = move  # The move returned to the game is in a different configuration than the CNN learn move
+
+            move_for_game = np.asarray(move)  # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
                 # the same should happen for the mini batch moves

@@ -36,10 +36,6 @@ def _new_board():
     # return ((0,)*9,)*10
 
 def apply_move(board_state, move, side):
-    # There is a problem when the move is presented as a list of 81 elements where they are all 0 except for the
-    # desired position. This functions needs an x and y coordinate.
-    if len(move) == 81:
-        move = UltimateTicTacToeGameSpec().flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
     move_x, move_y = move
 
     # update board

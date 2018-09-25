@@ -71,6 +71,7 @@ def train_policy_gradients(game_spec,
         tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder
 
     train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
+    #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient)
 
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())

@@ -68,7 +68,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
     input_layer, output_layer, variables = create_network()
 
     policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer)
-    train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
+    #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
 
     current_historical_index = 0 # We will (probably) not use this: we always train against the most recent agent
     historical_networks = []
@@ -90,6 +91,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             print("loading pre-existing network")
             load_network(session, variables, load_network_file_path)
             base_episode_number, winrates = load_results(load_network_file_path)
+        else:
+            print('Creating new network')
 
         def make_move_historical(historical_network_index, board_state, side):
             net = historical_networks[historical_network_index]
@@ -138,21 +141,21 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
 
-        for i in range(number_of_historic_networks):
-            if os.path.isfile(historic_network_base_path + str(i) + '.p'):
-                load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
-            elif load_network_file_path and os.path.isfile(load_network_file_path):
-                # if we can't load a historical file use the current network weights
-                print('Warning: loading historical file failed. Current net is being used.')
-                load_network(session, historical_networks[i][2], load_network_file_path)
+        #for i in range(number_of_historic_networks):
+        if os.path.isfile(historic_network_base_path + str(0) + '.p'):
+            load_network(session, historical_networks[0][2], historic_network_base_path + str(0) + '.p')
+            print('Historic network loaded')
+        else:
+            # if we can't load a historical file use the current network weights
+            print('Warning: loading historical file failed. Current net is saved and being used as historic net.')
+            historic_filename = historic_network_base_path + str(current_historical_index) + '.p'
+            save_network(session, variables, historic_filename)
+            load_network(session, historical_networks[current_historical_index][2], historic_filename)
 
-        first_bot = True  # When true, the agent did not yet achieve high enough winrate, so it plays against a random bot
         win_ticks = 0 # registers the amount of times the agent has a high enough winrate to update its opponent
         for episode_number in range(1, number_of_games):
             opponent_index = random.randint(0, number_of_historic_networks - 1)
             make_move_historical_for_index = functools.partial(make_move_historical, opponent_index)
-            if first_bot:
-                make_move_historical_for_index = game_spec.get_random_player_func()
 
             # randomize if going first or second
             if bool(random.getrandbits(1)):
@@ -164,11 +167,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
             # we scale here so winning quickly is better winning slowly and loosing slowly better than loosing quick
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)
-
             reward /= float(last_game_length)
-
             mini_batch_rewards += ([reward] * last_game_length)
-
             episode_number += 1
 
             if episode_number % batch_size == 0:
@@ -213,10 +213,9 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                     load_network(session, historical_networks[current_historical_index][2], historic_filename)
 
                     # also save to the main network file
-                    save_network(session, 
-                        variables, 
-                        (save_network_file_path or load_network_file_path)[:-2] + "_ep"+str(base_episode_number+episode_number) + ".p"
-                        )
+                    save_network(session, variables,
+                        (save_network_file_path or load_network_file_path)[:-2] +
+                                 "_ep"+str(base_episode_number+episode_number) + ".p")
 
                     current_historical_index += 1 # Not used when we only have 1 historic network
                     current_historical_index %= number_of_historic_networks

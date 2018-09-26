@@ -31,7 +31,7 @@ def _monte_carlo_sample(game_spec, board_state, side, policy = False, session = 
         # get stochastic network move gives wrong type (array of 81 elements instead of tuple), so we need to reconfigure
         move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                             valid_only, game_spec, cnn_on)
-        move = flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
+        move = game_spec.flat_move_to_tuple([i for i,x in enumerate(move) if x == 1][0])
     else:
         move = random.choice(moves)
     result, next_move = _monte_carlo_sample(game_spec, game_spec.apply_move(board_state, move, side), -side, policy,
@@ -71,7 +71,7 @@ def monte_carlo_tree_search(game_spec, board_state, side, number_of_samples, ses
     if policy:
         # When a policy is used, we want to return a list of length 81 since this is used for the minibatch moves
         listofzeros = [0] * 81
-        flat_move = tuple_move_to_flat(move)
+        flat_move = game_spec.tuple_move_to_flat(move)
         listofzeros[flat_move] = 1
     return move_wins[move] / move_samples[move], move if not policy else listofzeros
 
@@ -145,13 +145,6 @@ def monte_carlo_tree_search_uct(game_spec, board_state, side, number_of_samples)
     move = max(move_states, key=lambda x: state_results[move_states[x]] / (state_samples[move_states[x]] if state_samples[move_states[x]] > 0 else 10e3))
 
     return state_results[move_states[move]] / state_samples[move_states[move]], move
-
-# Could not import this from the uttt file since we then create a circular import loop
-def flat_move_to_tuple(move_index):
-    return int(move_index / 9), move_index % 9
-
-def tuple_move_to_flat(tuple_move):
-    return tuple_move[0] * 9 + tuple_move[1]
 
 if __name__ == '__main__':
     from games.tic_tac_toe import TicTacToeGameSpec

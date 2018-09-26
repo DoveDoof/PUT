@@ -52,7 +52,6 @@ class TestUltimateTicTacToe(test.TestCase):
 		n = 10
 		number_of_samples = 27
 
-		mcts_uct_func = game_spec.get_monte_carlo_uct_player_func()
 		mcts_func = game_spec.get_monte_carlo_player_func(number_of_samples)
 		rand_func = game_spec.get_random_player_func()
 

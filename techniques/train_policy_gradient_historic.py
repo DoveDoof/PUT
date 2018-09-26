@@ -10,6 +10,7 @@ import tensorflow as tf
 from common.network_helpers import get_stochastic_network_move, load_network, save_network, get_deterministic_network_move, get_random_network_move
 from common.network_helpers import create_3x3_board_states
 from common.visualisation import load_results
+from techniques.monte_carlo import monte_carlo_tree_search
 
 def train_policy_gradients_vs_historic(game_spec, create_network, load_network_file_path,
                                        save_network_file_path = None,
@@ -67,7 +68,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
     input_layer, output_layer, variables = create_network()
 
     policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer)
-    train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
+    #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
 
     current_historical_index = 0 # We will (probably) not use this: we always train against the most recent agent
     historical_networks = []
@@ -89,15 +91,22 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             print("loading pre-existing network")
             load_network(session, variables, load_network_file_path)
             base_episode_number, winrates = load_results(load_network_file_path)
+        else:
+            print('Creating new network')
 
         def make_move_historical(historical_network_index, board_state, side):
             net = historical_networks[historical_network_index]
             #move = get_stochastic_network_move(session, net[0], net[1], board_state, side,
             #                                  valid_only=True, game_spec=game_spec, CNN_ON=cnn_on)
-            move = get_deterministic_network_move(session, net[0], net[1], board_state, side,
+            if mcts:
+                _,move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+                            input_layer, output_layer, True, cnn_on, True)
+            else:
+                move = get_deterministic_network_move(session, net[0], net[1], board_state, side,
                                                 valid_only = True, game_spec = game_spec, cnn_on = cnn_on)
 
-            return game_spec.flat_move_to_tuple(move.argmax())
+            move_for_game = np.asarray(move) # move must be an array, mcts doesn't return this
+            return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
         def make_training_move(board_state, side):
             if cnn_on:
@@ -114,9 +123,14 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                 move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side,
                                                       valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
             else:
-                move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
+                if mcts:
+                    _, move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+                                                      input_layer, output_layer, True, cnn_on, True)
+                else:
+                    move = get_stochastic_network_move(session, input_layer, output_layer, board_state, side,
                                                    valid_only=True, game_spec=game_spec, cnn_on=cnn_on)
-            move_for_game = move  # The move returned to the game is in a different configuration than the CNN learn move
+
+            move_for_game = np.asarray(move)  # The move returned to the game is in a different configuration than the CNN learn move
             if cnn_on:
                 # Since the mini batch states is saved the same way it should enter the neural net (the adapted board state),
                 # the same should happen for the mini batch moves
@@ -127,21 +141,21 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
             return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
 
-        for i in range(number_of_historic_networks):
-            if os.path.isfile(historic_network_base_path + str(i) + '.p'):
-                load_network(session, historical_networks[i][2], historic_network_base_path + str(i) + '.p')
-            elif load_network_file_path and os.path.isfile(load_network_file_path):
-                # if we can't load a historical file use the current network weights
-                print('Warning: loading historical file failed. Current net is being used.')
-                load_network(session, historical_networks[i][2], load_network_file_path)
+        #for i in range(number_of_historic_networks):
+        if os.path.isfile(historic_network_base_path + str(0) + '.p'):
+            load_network(session, historical_networks[0][2], historic_network_base_path + str(0) + '.p')
+            print('Historic network loaded')
+        else:
+            # if we can't load a historical file use the current network weights
+            print('Warning: loading historical file failed. Current net is saved and being used as historic net.')
+            historic_filename = historic_network_base_path + str(current_historical_index) + '.p'
+            save_network(session, variables, historic_filename)
+            load_network(session, historical_networks[current_historical_index][2], historic_filename)
 
-        first_bot = True  # When true, the agent did not yet achieve high enough winrate, so it plays against a random bot
         win_ticks = 0 # registers the amount of times the agent has a high enough winrate to update its opponent
         for episode_number in range(1, number_of_games):
             opponent_index = random.randint(0, number_of_historic_networks - 1)
             make_move_historical_for_index = functools.partial(make_move_historical, opponent_index)
-            if first_bot:
-                make_move_historical_for_index = game_spec.get_random_player_func()
 
             # randomize if going first or second
             if bool(random.getrandbits(1)):
@@ -153,11 +167,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
             # we scale here so winning quickly is better winning slowly and loosing slowly better than loosing quick
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)
-
             reward /= float(last_game_length)
-
             mini_batch_rewards += ([reward] * last_game_length)
-
             episode_number += 1
 
             if episode_number % batch_size == 0:
@@ -202,10 +213,9 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                     load_network(session, historical_networks[current_historical_index][2], historic_filename)
 
                     # also save to the main network file
-                    save_network(session, 
-                        variables, 
-                        (save_network_file_path or load_network_file_path)[:-2] + "_ep"+str(base_episode_number+episode_number) + ".p"
-                        )
+                    save_network(session, variables,
+                        (save_network_file_path or load_network_file_path)[:-2] +
+                                 "_ep"+str(base_episode_number+episode_number) + ".p")
 
                     current_historical_index += 1 # Not used when we only have 1 historic network
                     current_historical_index %= number_of_historic_networks

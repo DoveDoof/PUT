@@ -68,13 +68,16 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
     input_layer, output_layer, variables, weights = create_network()
 
+    baseline = np.zeros([100, 1])
+    baselineCounter = 0
     policy_gradient = tf.log(
-        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder # From non-historic
+        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * (
+                      reward_placeholder - np.mean(baseline))
     #policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer) #Original one from historic
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
 
-    regularizer = sum([tf.nn.l2_loss(i) for i in weights])
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient + beta*regularizer)
+    #regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)# + beta*regularizer)
 
     current_historical_index = 0 # We will (probably) not use this: we always train against the most recent agent
     historical_networks = []
@@ -170,6 +173,9 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                 reward = -game_spec.play_game(make_move_historical_for_index, make_training_move)
 
             results.append(reward)
+            baseline[baselineCounter] = reward
+            baselineCounter += 1
+            baselineCounter = baselineCounter % 100
 
             # we scale here so winning quickly is better winning slowly and loosing slowly better than loosing quick
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)

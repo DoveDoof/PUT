@@ -67,12 +67,13 @@ def train_policy_gradients(game_spec,
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
 
     input_layer, output_layer, variables, weights = create_network()
-
+    baseline = np.zeros([100,1])
+    baselineCounter = 0
     policy_gradient = tf.log(
-        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder
+        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * (reward_placeholder - np.mean(baseline))
 
-    regularizer = sum([tf.nn.l2_loss(i) for i in weights])
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient + beta * regularizer)
+    #regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient) # + beta * regularizer)
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient)
 
     with tf.Session() as session:
@@ -131,7 +132,9 @@ def train_policy_gradients(game_spec,
                 reward = -game_spec.play_game(opponent_func, make_training_move)
 
             results.append(reward)
-
+            baseline[baselineCounter] = reward
+            baselineCounter += 1
+            baselineCounter = baselineCounter % 100
             # we scale here so winning quickly is better winning slowly and losing slowly better than losing quickly
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)
 

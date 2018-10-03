@@ -25,7 +25,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
                                        eps = 0.1,
                                        deterministic = True,
                                        mcts = False,
-                                       min_win_ticks = 3):
+                                       min_win_ticks = 3,
+                                       beta = 0.01):
     """Train a network against itself and over time store new version of itself to play against.
 
     Args:
@@ -65,13 +66,15 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
     reward_placeholder = tf.placeholder("float", shape=(None,))
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
 
-    input_layer, output_layer, variables = create_network()
+    input_layer, output_layer, variables, weights = create_network()
 
     policy_gradient = tf.log(
         tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder # From non-historic
     #policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer) #Original one from historic
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
+
+    regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient + beta*regularizer)
 
     current_historical_index = 0 # We will (probably) not use this: we always train against the most recent agent
     historical_networks = []
@@ -80,7 +83,7 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
     results = collections.deque(maxlen=print_results_every)
 
     for _ in range(number_of_historic_networks):
-        historical_input_layer, historical_output_layer, historical_variables = create_network()
+        historical_input_layer, historical_output_layer, historical_variables, _ = create_network()
         historical_networks.append((historical_input_layer, historical_output_layer, historical_variables))
 
     with tf.Session() as session:

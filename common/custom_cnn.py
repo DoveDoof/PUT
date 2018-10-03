@@ -8,6 +8,7 @@ def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [45
     # dense_width: amount of nodes in a dense layer (list)
 
     variables = []
+    all_weights = []
 
     # Create a placeholder for the minibatch input data
     x1 = tf.placeholder(tf.float32,[None, 90])
@@ -17,6 +18,7 @@ def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [45
     x_shaped = tf.reshape(x1, [-1, 3, 3, 10])
 
     layer, w1_cnn, b1_cnn, beta, scale = create_new_conv_layer(x_shaped, 10, filter_depth[0], filter_shape, [1, 1], name='layer1')
+    all_weights.append(w1_cnn)
     variables.append(w1_cnn)
     variables.append(b1_cnn)
     variables.append(beta)
@@ -24,6 +26,7 @@ def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [45
 
     for i in range (2, len(filter_depth) + 1):
         layer, weights, biases, beta, scale = create_new_conv_layer(layer, filter_depth[i-2], filter_depth[i-1], filter_shape, [1, 1], name='layer' + str(i))
+        all_weights.append(weights)
         variables.append(weights)
         variables.append(biases)
         variables.append(beta)
@@ -58,6 +61,7 @@ def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [45
         biases = tf.Variable(tf.truncated_normal([dense_width], stddev=0.01), name='bd' + str(i))
         layer = tf.matmul(layer, weights) + biases
         layer = tf.nn.relu(layer)
+        all_weights.append(weights)
         variables.append(weights)
         variables.append(biases)
 
@@ -67,12 +71,13 @@ def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [45
     biases = tf.Variable(tf.truncated_normal([81], stddev=0.01), name='b_out' + str(i))
     layer = tf.matmul(layer, weights) + biases
     layer = tf.nn.relu(layer)
+    all_weights.append(weights)
     variables.append(weights)
     variables.append(biases)
     output_layer = tf.nn.softmax(layer)
 
     # Returns the input data placeholder, output layer and all the weights (+ biases)
-    return x1, output_layer, variables
+    return x1, output_layer, variables, all_weights
 
 def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_shape, pool_shape, name):
     # setup the filter input shape for tf.nn.conv_2d

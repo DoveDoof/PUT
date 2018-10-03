@@ -25,7 +25,8 @@ def train_policy_gradients(game_spec,
                            cnn_on = False,
                            eps = 0.1,
                            deterministic = True,
-                           mcts = False):
+                           mcts = False,
+                           beta = 0.01):
     """Train a network using policy gradients
 
     Args:
@@ -65,12 +66,13 @@ def train_policy_gradients(game_spec,
     reward_placeholder = tf.placeholder("float", shape=(None,))
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
 
-    input_layer, output_layer, variables = create_network()
+    input_layer, output_layer, variables, weights = create_network()
 
     policy_gradient = tf.log(
         tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder
 
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
+    regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient + beta * regularizer)
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient)
 
     with tf.Session() as session:

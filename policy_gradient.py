@@ -42,8 +42,7 @@ config['input_layer'] = input_layer
 config['output_layer'] = output_layer
 
 if config['cnn_on']:
-	create_network_func = functools.partial(cnn.create_network, 
-											config['number_of_cnnlayers'],
+	create_network_func = functools.partial(cnn.create_network,
 											config['filter_shape'],
 											config['filter_depth'],
 											config['dense_width'])

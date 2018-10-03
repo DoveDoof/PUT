@@ -149,6 +149,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
         np_board_state = -np_board_state
 
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
+    np_board_state[abs(np_board_state) > 1] = 0
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
@@ -203,7 +204,7 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
     if side == -1:
         np_board_state = -np_board_state
-
+    np_board_state[abs(np_board_state) > 1] = 0
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
     if cnn_on:

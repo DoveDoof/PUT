@@ -95,6 +95,7 @@ def train_policy_gradients(game_spec,
                 np_board_state = create_3x3_board_states(board_state)
             else:
                 np_board_state = np.array(board_state)
+            np_board_state[np_board_state > 1] = 0
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
 
             rand_numb = random.uniform(0., 1.)

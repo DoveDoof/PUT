@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-def create_network(number_of_CNNlayers, filter_shape = [3, 3], filter_depth = 10, dense_width = [450, 200]):
+def create_network(filter_shape = [3, 3], filter_depth = [10], dense_width = [450, 200]):
     # number_of_CNNlayers: amount of cnn layers, must be > 0 (int)
     # filter_size: filter used in the CNN layers ([x,y])
     # filter_depth: amount of filters in a CNN layer
@@ -16,14 +16,14 @@ def create_network(number_of_CNNlayers, filter_shape = [3, 3], filter_depth = 10
     #x_shaped = tf.reshape(x1,[-1, 10, 9, 1]) #Change this to 3x3x9 or 10 for the 9(10) boards conv
     x_shaped = tf.reshape(x1, [-1, 3, 3, 10])
 
-    layer, w1_cnn, b1_cnn, beta, scale = create_new_conv_layer(x_shaped, 10, filter_depth, filter_shape, [1, 1], name='layer1')
+    layer, w1_cnn, b1_cnn, beta, scale = create_new_conv_layer(x_shaped, 10, filter_depth[0], filter_shape, [1, 1], name='layer1')
     variables.append(w1_cnn)
     variables.append(b1_cnn)
     variables.append(beta)
     variables.append(scale)
 
-    for i in range (2, number_of_CNNlayers + 1):
-        layer, weights, biases, beta, scale = create_new_conv_layer(layer, filter_depth, filter_depth, filter_shape, [1, 1], name='layer' + str(i))
+    for i in range (2, len(filter_depth) + 1):
+        layer, weights, biases, beta, scale = create_new_conv_layer(layer, filter_depth[i-2], filter_depth[i-1], filter_shape, [1, 1], name='layer' + str(i))
         variables.append(weights)
         variables.append(biases)
         variables.append(beta)
@@ -48,7 +48,7 @@ def create_network(number_of_CNNlayers, filter_shape = [3, 3], filter_depth = 10
     variables.append(scale)
     """
     # Flatten out and add dense layers
-    layer = tf.reshape(layer, [-1, 3*3 * filter_depth])
+    layer = tf.reshape(layer, [-1, 3*3 * filter_depth[-1]])
 
     # Create variables for the weights and biases for the fully connected layers
     # ([number of nodes from previous layer, desired nodes this layer], std)
@@ -62,7 +62,7 @@ def create_network(number_of_CNNlayers, filter_shape = [3, 3], filter_depth = 10
         variables.append(biases)
 
     # The last layer must have 81 output nodes and use softmax:
-    weights = tf.Variable(tf.truncated_normal((3 * 3 * filter_depth if not dense_width else dense_width, 81),
+    weights = tf.Variable(tf.truncated_normal((3 * 3 * filter_depth[-1] if not dense_width else dense_width, 81),
                                               stddev=1. / np.sqrt(int(layer.get_shape()[-1]))), name='w_out' + str(i))
     biases = tf.Variable(tf.truncated_normal([81], stddev=0.01), name='b_out' + str(i))
     layer = tf.matmul(layer, weights) + biases

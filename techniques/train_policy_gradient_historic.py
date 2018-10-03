@@ -67,7 +67,9 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
     input_layer, output_layer, variables = create_network()
 
-    policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer)
+    policy_gradient = tf.log(
+        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder # From non-historic
+    #policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer) #Original one from historic
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
     train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
 
@@ -83,7 +85,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
 
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
-
+        #testvar = variables[0] #\\ test for checking variables
+        #print(session.run(variables[0]))
         base_episode_number = 0
         winrates = []
 

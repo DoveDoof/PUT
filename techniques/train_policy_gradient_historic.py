@@ -76,8 +76,8 @@ def train_policy_gradients_vs_historic(game_spec, create_network, load_network_f
     #policy_gradient = tf.reduce_sum(tf.reshape(reward_placeholder, (-1, 1)) * actual_move_placeholder * output_layer) #Original one from historic
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient) # Why is this one different from the other train policy grad?
 
-    #regularizer = sum([tf.nn.l2_loss(i) for i in weights])
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)# + beta*regularizer)
+    regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient + beta*regularizer)
 
     current_historical_index = 0 # We will (probably) not use this: we always train against the most recent agent
     historical_networks = []

@@ -42,8 +42,7 @@ config['input_layer'] = input_layer
 config['output_layer'] = output_layer
 
 if config['cnn_on']:
-	create_network_func = functools.partial(cnn.create_network, 
-											config['number_of_cnnlayers'],
+	create_network_func = functools.partial(cnn.create_network,
 											config['filter_shape'],
 											config['filter_depth'],
 											config['dense_width'])
@@ -70,7 +69,8 @@ if config['historic']:
 											 eps = config['eps'],
 											 deterministic = config['deterministic'],
 											 mcts = config['mcts'],
-											 min_win_ticks = config['min_win_ticks'])
+											 min_win_ticks = config['min_win_ticks'],
+											 beta = config['beta'])
 else:
 	res = train_policy_gradients(game_spec,
 											 create_network_func,
@@ -83,7 +83,8 @@ else:
 											 cnn_on = config['cnn_on'],
 								 			 eps = config['eps'],
 								 			 deterministic = config['deterministic'],
-								 			mcts=config['mcts'])
+								 			 mcts=config['mcts'],
+											 beta=config['beta'])
 
 
 config["results"] = res[2]

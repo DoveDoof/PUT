@@ -25,6 +25,7 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
     output_nodes = output_nodes or input_nodes
 
     variables = []
+    all_weights = []
 
     with tf.name_scope('network'):
         if isinstance(input_nodes, tuple):
@@ -41,7 +42,7 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
                 tf.truncated_normal((last_layer_nodes, hidden_nodes), stddev=1. / np.sqrt(last_layer_nodes)),
                 name='weights')
             hidden_bias = tf.Variable(tf.constant(0.01, shape=(hidden_nodes,)), name='biases')
-
+            all_weights.append(hidden_weights)
             variables.append(hidden_weights)
             variables.append(hidden_bias)
 
@@ -64,7 +65,7 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
         output_weights = tf.Variable(
             tf.truncated_normal((hidden_nodes, output_nodes), stddev=1. / np.sqrt(output_nodes)), name="output_weights")
         output_bias = tf.Variable(tf.constant(0.01, shape=(output_nodes,)), name="output_bias")
-
+        all_weights.append(output_weights)
         variables.append(output_weights)
         variables.append(output_bias)
 
@@ -72,7 +73,7 @@ def create_network(input_nodes, hidden_nodes, output_nodes=None, output_softmax=
         if output_softmax:
             output_layer = tf.nn.softmax(output_layer)
 
-    return input_layer, output_layer, variables
+    return input_layer, output_layer, variables, all_weights
 
 
 def save_network(session, tf_variables, file_path):
@@ -149,6 +150,7 @@ def get_stochastic_network_move(session, input_layer, output_layer, board_state,
         np_board_state = -np_board_state
 
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
+    np_board_state[abs(np_board_state) > 1] = 0
 
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
@@ -203,7 +205,7 @@ def get_deterministic_network_move(session, input_layer, output_layer, board_sta
     np_board_state = np_board_state.reshape(1, *input_layer.get_shape().as_list()[1:])
     if side == -1:
         np_board_state = -np_board_state
-
+    np_board_state[abs(np_board_state) > 1] = 0
     probability_of_actions = session.run(output_layer,
                                          feed_dict={input_layer: np_board_state})[0]
     if cnn_on:

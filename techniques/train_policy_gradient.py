@@ -25,7 +25,8 @@ def train_policy_gradients(game_spec,
                            cnn_on = False,
                            eps = 0.1,
                            deterministic = True,
-                           mcts = False):
+                           mcts = False,
+                           beta = 0.01):
     """Train a network using policy gradients
 
     Args:
@@ -65,12 +66,14 @@ def train_policy_gradients(game_spec,
     reward_placeholder = tf.placeholder("float", shape=(None,))
     actual_move_placeholder = tf.placeholder("float", shape=(None, game_spec.outputs()))
 
-    input_layer, output_layer, variables = create_network()
-
+    input_layer, output_layer, variables, weights = create_network()
+    baseline = np.zeros([100,1])
+    baselineCounter = 0
     policy_gradient = tf.log(
-        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * reward_placeholder
+        tf.reduce_sum(tf.multiply(actual_move_placeholder, output_layer), axis=1)) * (reward_placeholder - np.mean(baseline))
 
-    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient)
+    #regularizer = sum([tf.nn.l2_loss(i) for i in weights])
+    train_step = tf.train.AdamOptimizer(learn_rate).minimize(-policy_gradient) # + beta * regularizer)
     #train_step = tf.train.RMSPropOptimizer(learn_rate).minimize(-policy_gradient)
 
     with tf.Session() as session:
@@ -95,6 +98,7 @@ def train_policy_gradients(game_spec,
                 np_board_state = create_3x3_board_states(board_state)
             else:
                 np_board_state = np.array(board_state)
+            np_board_state[np_board_state > 1] = 0
             mini_batch_board_states.append(np_board_state * side) # append all states are used in the minibatch (+ and - determine which player's state it was)
 
             rand_numb = random.uniform(0., 1.)
@@ -128,7 +132,9 @@ def train_policy_gradients(game_spec,
                 reward = -game_spec.play_game(opponent_func, make_training_move)
 
             results.append(reward)
-
+            baseline[baselineCounter] = reward
+            baselineCounter += 1
+            baselineCounter = baselineCounter % 100
             # we scale here so winning quickly is better winning slowly and losing slowly better than losing quickly
             last_game_length = len(mini_batch_board_states) - len(mini_batch_rewards)
 

@@ -20,6 +20,8 @@ print_results_every: 1000
 learn_rate: 1.e-3
 # Determines what fraction of moves are random. eps = 0. is fully deterministic/stochastically, while eps = 1. is fully random
 eps: 0.1
+# regularizer parameter
+beta: 0.01
 # Determines whether the moves are deterministic or stochastic. True is deterministic, False is stochastic
 deterministic: True
 # Option to incorporate MCTS with policy gradient

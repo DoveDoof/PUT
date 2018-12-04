@@ -32,7 +32,7 @@ from games.uttt import UltimateTicTacToeGameSpec
 
 
 netloc = 'networks/regnn_50_50_50_e-3_stoch_mcts/'
-
+nr_testgames = 3
 
 
 
@@ -122,8 +122,8 @@ for _ in netlist:
 with tf.Session() as session:
 	session.run(tf.global_variables_initializer())
 	print('location: '+netloc)
-	print('loaded historic net: ' + historic_net)
 	load_network(session, historical_variables, netloc+historic_net)
+	print('loaded historic net: ' + historic_net)
 
 	def make_move_historical(net, board_state, side):
 		if mcts:
@@ -140,22 +140,27 @@ with tf.Session() as session:
 
 	results = []
 	for i, network in enumerate(networks[0:2]):
-		print('loading network: ' + netlist[i])
 		load_network(session, network[2], netloc+netlist[i])
+		print('loaded network: ' + netlist[i])
 
 		make_move_hist = functools.partial(make_move_historical, (historical_input_layer, historical_output_layer, historical_variables))
 		make_move_testnet = functools.partial(make_move_historical, network)
 
-		if bool(random.getrandbits(1)):
-			print('testnet as X')
-			reward = game_spec.play_game(make_move_testnet, make_move_hist)
-		else:
-			print('testnet as O')
-			reward = -game_spec.play_game(make_move_hist, make_move_testnet)
-		results.append([reward])
+		results.append([])
+		for j in range(nr_testgames):
+			if bool(random.getrandbits(1)):
+				# testnet as X
+				reward = game_spec.play_game(make_move_testnet, make_move_hist)
+			else:
+				# testnet as O
+				reward = -game_spec.play_game(make_move_hist, make_move_testnet)
+			results[-1].append(reward)
+			print('game %i/%i done'%(j+1,nr_testgames), end="\r")
 
-	print(results)
+		with open(netloc+'_postresults_benchmarking'+str(nr_games[i][0])+'.json', 'w') as outfile:
+			json.dump(results[-1], outfile)
+		print('network done, winrate: %f, results:' % round(np.mean(results[-1])/2.0 + 0.5, 3))
+		print(results[-1])
 
-
-with open(netloc+'_postresults_benchmarking.json', 'w') as outfile:
-	json.dump(results, outfile)
+	with open(netloc+'_postresults_benchmarking.json', 'w') as outfile:
+		json.dump(results, outfile)

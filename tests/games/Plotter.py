@@ -31,7 +31,6 @@ plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 plt.rcParams.update({'font.size': fontsize})
 fig, ax = plt.subplots()
-
 ax.xaxis.offsetText.set_fontsize(fontsize)
 plt.ticklabel_format( style='sci', axis='x', scilimits=(0, 3))
 plt.plot(np.asfarray(games), winrate, np.asfarray(games), lossrate, np.asfarray(games), drawrate)

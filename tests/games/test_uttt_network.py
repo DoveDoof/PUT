@@ -8,7 +8,9 @@ import time
 import json
 import os
 import re
+import numpy as np
 
+from techniques.monte_carlo import monte_carlo_tree_search
 import common.custom_cnn as cnn
 from common.network_helpers import load_network, get_stochastic_network_move, create_network, get_deterministic_network_move
 from common.visualisation import load_results
@@ -20,11 +22,11 @@ class TestUltimateTicTacToe(test.TestCase):
 
 	def test_game_network(self):
 
-		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\cnn_10_10_10_e-3_stoch\\'
-		n = 1000
-		steps_games = 5
-		cnn_on = True
-		mcts = False
+		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\regnn_50_50_50_e-3_stoch_mcts\\'
+		n = 100
+		steps_games = 10
+		cnn_on = False
+		mcts = True
 		filter_shape = [3, 3]
 		filter_depth = [10, 10, 10]
 		dense_width = []
@@ -81,8 +83,14 @@ class TestUltimateTicTacToe(test.TestCase):
 		# opponent_func = game_spec.get_manual_player_func()
 
 		def player_func(board_state, side):
-			move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
-			return game_spec.flat_move_to_tuple(move.argmax())
+			if mcts:
+				_, move = monte_carlo_tree_search(game_spec, board_state, side, 27, session,
+												  input_layer, output_layer, True, cnn_on, True)
+			else:
+				move = get_deterministic_network_move(session, input_layer, output_layer, board_state, side, valid_only = True, game_spec = game_spec)
+
+			move_for_game = np.asarray(move)  # The move returned to the game is in a different configuration than the CNN learn move
+			return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
 		if cnn_on:
 			create_network_func = functools.partial(cnn.create_network,

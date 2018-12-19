@@ -22,7 +22,6 @@ def plot(res, title='Winrate over time vs random player'):
 	plt.xticks(fontsize=fontsize)
 	ax.xaxis.offsetText.set_fontsize(fontsize)
 	plt.ylim([0, 1])
-	plt.title(title)
 	plt.show()
 
 def save(data):
@@ -73,7 +72,7 @@ def plot_last(directory = './networks/'):
 			p = re.compile('_results_\d{4}-\d{2}-\d{2}_\d{6}_\d+\.json')
 			if p.search(file[0]) is not None:
 				filelist.append(file)
-
+		filelist = filelist[::-1]
 
 		for i,file in enumerate(filelist):
 			print(i, file[1])

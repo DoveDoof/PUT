@@ -37,8 +37,8 @@ for key,value in d.items():
     games.append(key)
 
 fig, ax = plt.subplots()
-plt.ticklabel_format( style='sci', axis='x', scilimits=(0, 3))
-plt.plot(np.array(games), np.array(winrate))
+plt.ticklabel_format( style='sci', axis='x', scilimits=(0,0))
+plt.plot(np.asfarray(games), np.array(winrate))
 plt.legend(['win rate','loss rate','draw rate'])
 
 plt.title("Benchmark")

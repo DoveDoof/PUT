@@ -17,12 +17,14 @@ class TestUltimateTicTacToe(test.TestCase):
 	# Test case
 	# Manually playing single game against a network
 	# run with: py -m unittest tests\games\test_uttt_network.py
+
 	def test_game_network(self):
 
-		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\cnn_10_10_10_e-3_det_1e-1\\'
-		n = 100
+		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\cnn_10_10_10_e-3_stoch\\'
+		n = 1000
 		steps_games = 5
 		cnn_on = True
+		mcts = False
 		filter_shape = [3, 3]
 		filter_depth = [10, 10, 10]
 		dense_width = []
@@ -70,7 +72,12 @@ class TestUltimateTicTacToe(test.TestCase):
 
 		game_spec = ut.UltimateTicTacToeGameSpec()
 
-		opponent_func = game_spec.get_random_player_func()
+		if mcts:
+			opponent_func = game_spec.get_monte_carlo_player_func(number_of_samples=27)
+		else:
+			opponent_func = game_spec.get_random_player_func()
+
+
 		# opponent_func = game_spec.get_manual_player_func()
 
 		def player_func(board_state, side):

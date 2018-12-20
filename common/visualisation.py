@@ -76,7 +76,7 @@ def plot_last(directory = './networks/'):
 			p = re.compile('_results_\d{4}-\d{2}-\d{2}_\d{6}_\d+\.json')
 			if p.search(file[0]) is not None:
 				filelist.append(file)
-
+		filelist = filelist[::-1]
 
 		for i,file in enumerate(filelist):
 			print(i, file[1])

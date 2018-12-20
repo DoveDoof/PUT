@@ -21,7 +21,10 @@ def plot(res, title='Winrate over time vs random player'):
 	plt.xlabel('Number of games', fontsize=fontsize)
 	plt.xticks(fontsize=fontsize)
 	ax.xaxis.offsetText.set_fontsize(fontsize)
+	plt.minorticks_on()
+	ax.grid(which='both')
 	plt.ylim([0, 1])
+	plt.xlim(xmin = 0)
 	plt.title(title)
 	plt.show()
 
@@ -61,13 +64,13 @@ def load_results(file, results_only = True):
 
 def plot_last(directory = './networks/'):
 	# replace /*/ with /**/ to make recursive
-	paths = glob.glob('networks/*/*.json', recursive=True)
+	paths = glob.glob(r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\*\*.json', recursive=True)
 	
 	if (len(paths)>0):
 		files = [(i.split('\\')[-1], i) for i in paths]
 		# sort on filename, not path
 		files = sorted(files, key = lambda x:x[0])
-
+		files = files[::-1]
 		filelist = []
 		for file in files:
 			p = re.compile('_results_\d{4}-\d{2}-\d{2}_\d{6}_\d+\.json')

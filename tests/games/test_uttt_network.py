@@ -22,10 +22,10 @@ class TestUltimateTicTacToe(test.TestCase):
 
 	def test_game_network(self):
 
-		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\regnn_50_50_50_e-3_stoch_mcts\\'
+		network_file_path = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\cnn_50_50_50_e-3_stoch_mcts\\'
 		n = 100
 		steps_games = 10
-		cnn_on = False
+		cnn_on = True
 		mcts = True
 		filter_shape = [3, 3]
 		filter_depth = [10, 10, 10]

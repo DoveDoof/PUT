@@ -31,8 +31,8 @@ from techniques.train_policy_gradient_historic import train_policy_gradients_vs_
 from games.uttt import UltimateTicTacToeGameSpec
 
 
-netloc = 'networks/regnn_50_50_50_e-3_stoch_mcts/'
-nr_testgames = 3
+netloc = r'C:\Users\User\APH\1B 2017 2018\Advanced Machine Learning\Resit\Git\QLUT\networks\cnn_50_50_50_e-3_stoch_mcts\\'
+nr_testgames = 100
 
 
 
@@ -107,8 +107,11 @@ nr_games = []
 for i, name in enumerate(raw_netlist):
 	nr_games.append((int(name[6:-20]), i))
 nr_games.sort()
+nr_games = nr_games[::-1]
 
 netlist = [raw_netlist[i[1]] for i in nr_games]
+
+print(netlist)
 
 opponent_index = 0
 
@@ -139,7 +142,7 @@ with tf.Session() as session:
 		return game_spec.flat_move_to_tuple(move_for_game.argmax())
 
 	results = []
-	for i, network in enumerate(networks[0:2]):
+	for i, network in enumerate(networks):
 		load_network(session, network[2], netloc+netlist[i])
 		print('loaded network: ' + netlist[i])
 
